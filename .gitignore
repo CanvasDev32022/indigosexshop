@@ -11,3 +11,11 @@
 /vendor
 
 #Archivos
+uploads/productos/*
+!uploads/productos/.gitkeep
+
+uploads/archivos/*
+!uploads/archivos/.gitkeep
+
+uploads/editor/*
+!uploads/editor/.gitkeep
