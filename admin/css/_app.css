@@ -42,7 +42,7 @@
 	--sec-4: #0899c5;
 
 	--success: #3adb76;
-    --warning: #ffae00;
+    --warning: #ff9d00;
     --alert: #cc4b37;
     --on-primary: #2d539e;
 	
@@ -94,6 +94,7 @@ body.dark { background: var(--sup-3); overflow-y: scroll; overflow-x: hidden; }
 .verde:hover, .verde:active{background-color:#4A924A}
 
 .texto-azuloscuro { color: #003359 !important; font-weight:bold; }
+.tachado { text-decoration: line-through !important; }
 
 /* M��rgenes y Paddings */
 .m-0{margin:0px !important} .m-5{margin:5px !important} .m-10{margin:10px !important} .m-15{margin:15px !important} .m-20{margin:20px !important} .m-25{margin:25px !important} .m-30{margin:30px !important} .m-35{margin:35px !important} .m-40{margin:40px !important} 
@@ -981,7 +982,7 @@ a.btn-floating.outline-blue i:hover {
 
 /* TODO: CUSTOM MULTI SELECT TAG */
 
-.selectize-control.multi { margin-top: 10px; height: 2.6rem; }
+.selectize-control.multi { margin-top: 10px; display: contents; }
 
 .selectize-control.multi .selectize-input{ 
 	display: flex; 
@@ -989,7 +990,7 @@ a.btn-floating.outline-blue i:hover {
 	padding: 0px 10px !important; 
 	flex-wrap: wrap;
 	gap: .3em;
-	min-height: 100px;
+	min-height: 2.6rem;
 }
 .selectize-control.multi .selectize-input > div {
 	margin: 0;
@@ -1104,7 +1105,8 @@ input.sp-original-input-container:not([type]):focus {
 }
 
 .selectize-dropdown {
-	top: 3.2rem !important;
+/*	top: 1rem !important;*/
+/*	margin-top: 10px;*/
 	border-radius: 10px;
 	border: 1px solid #cccccc;
 	border-radius: 10px;
@@ -2532,4 +2534,19 @@ strong{font-weight:bold}
 
 .chips input:not([type]):focus:not(readonly) {
 	border: none !important;
+}
+
+.activo {
+	color: #02c574 !important;
+	font-weight: bold;
+}
+
+.promocion {
+	color: #ff9d00 !important;
+	font-weight: bold;
+}
+
+.agotado {
+	color: #ff2e4c !important;
+	font-weight: bold;
 }

@@ -1,5 +1,7 @@
 const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => {
 	
+	validaciones_global = [];
+
 	// TODO: MODULO USUARIOS
 	if(seccion == "usuarios")
 	{
@@ -537,10 +539,12 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 			<table class="custom-table">
 				<thead>
 					<tr>
+						<th class="table-10">Imagen</th>
 						<th class="table-20">Nombre</th>
 						<th class="table-20">Precio</th>
-						<th class="table-20">Ajustar imagen</th>
-						<th class="table-20">Estado</th>
+						<th class="table-10">Mostrar</th>
+						<th class="table-10">Destacar</th>
+						<th class="table-10">Estado</th>
 						<th class="table-20">Acciones</th>
 					</tr>
 				</thead>
@@ -559,7 +563,66 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 	else
 	if(seccion == "productos_lista")
 	{
+		const modulo = "productos";
+		const seccion_singular = "producto";
+		const seccion_legible = "Producto";
+
+		const slug_producto = generar_slug(datos['prd_nombre']);
+		let botones_accesos = "";
+		if(validar_acceso('producto_ver', rol))
+			botones_accesos = botones_accesos + `<a href="/${datos['prd_id']}/producto/${slug_producto}" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Ver ${seccion_legible}"><i class="material-icons">visibility</i></a>`;
+
+		if(validar_acceso('producto_variaciones', rol))
+			botones_accesos = botones_accesos + `<a onclick="plantillas('${seccion_singular}_variaciones','', '', '${pagina}','${busqueda}',${datos['prd_id']})" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Variaciones"><i class="material-icons">spoke</i></a>`;
+
+		if(validar_acceso('producto_editar', rol))
+			botones_accesos = botones_accesos + `<a onclick="plantillas('${seccion_singular}_editar','', '', '${pagina}','${busqueda}',${datos['prd_id']})" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Editar ${seccion_legible}"><i class="material-icons">edit</i></a>`;
+
+		if(validar_acceso('producto_eliminar', rol))
+			botones_accesos = botones_accesos + `<a onclick="eliminar_registro(${datos['prd_id']}, '${modulo}', ${pagina}, '${busqueda}')" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar ${seccion_legible}"><i class="material-icons">delete</i></a>`;
+
+
+		const mostrar = datos['prd_visible'] ? "checked" : "";
+		const destacar = datos['prd_destacado'] ? "checked" : "";
+		const tmpGaleria = datos['prd_imagen'].split(";;");
+		const tmpImagen = tmpGaleria[0].split("||");
+		const imagen = `../uploads/productos/${tmpImagen[1]}`;
+
+		let estado = datos['prs_nombre'];
+		let precioContainer = `<td>${ajustarPrecio(datos['prd_precio'])}<td>`;
+		if(datos['prd_promocion']) {
+			estado = "Promoción";
+			precioContainer = `<td>${ajustarPrecio(datos['prd_preciopromocion'])} - <span class="tachado">${ajustarPrecio(datos['prd_precio'])}</span></td>`;
+		}
 		
+
+		let contenedor = `
+		<td>
+			<img src="${imagen}" alt="${tmpImagen[0]}" height="70">
+		</td>
+		<td>${datos['prd_nombre']}</td>
+		${precioContainer}
+		<td>
+			<div class="switch custom-switch">
+				<label>
+					<input type="checkbox" id="prd_visible" name="prd_visible" ${mostrar}>
+					<span class="lever custom-leaver"></span>
+				</label>
+			</div>
+		</td>
+		<td>
+			<div class="switch custom-switch">
+				<label>
+					<input type="checkbox" id="prd_destacado" name="prd_destacado" ${destacar}>
+					<span class="lever custom-leaver"></span>
+				</label>
+			</div>
+		</td>
+		<td class="${removeAccents(estado).toLowerCase()}">${estado}</td>
+		<td>
+			${botones_accesos}
+		</td>`;
+		return contenedor;
 	}
 	else
 	if(seccion == "producto_crear")
@@ -572,7 +635,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 		modal.innerHTML = loaderComponent();
 
 		var xhr = new XMLHttpRequest();
-		var params 	= `action=obtener_crear`;
+		var params 	= `idioma=${cms_idioma}&action=obtener_crear`;
 		xhr.open("POST", `inc/${modulo}.php`,true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		xhr.send(params);
@@ -583,7 +646,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 				if(xhr.status == 200)
 				{
 					data = xhr.responseText.trim();
-					console.log(data);
+					// console.log(data);
 					if(data < 0) {
 						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
 						$(`#modal-${modulo}`).modal('close');
@@ -591,18 +654,16 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 
 						const tmp = data.split("::");
 						const categorias = JSON.parse(tmp[0]);
+						const productos = JSON.parse(tmp[1]);
 
 						let optionCategorias = "";
-						for (var i = 0; i < 6; i++) {
-							optionCategorias = optionCategorias + `
-							<div class="col s12 m12">
-								<p>
-									<label>
-										<input type="checkbox" class="filled-in" checked="checked" />
-										<span>Potencializadores</span>
-									</label>
-								</p>
-							</div>`;
+						for (var i = 0; i < categorias.length; i++) {
+							optionCategorias = optionCategorias + `<option value="${categorias[i]['pct_id']}">${categorias[i]['pct_nombre']}</option>`;
+						}
+
+						let optionsRelacionado = "";
+						for (var i = 0; i < productos.length; i++) {
+							optionCategorias = optionCategorias + `<option value="${productos[i]['prd_id']}">${productos[i]['prd_nombre']}</option>`;
 						}
 
 
@@ -612,7 +673,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 								<div class="container mt-0">
 									<div class="row mb-0">
 										<div class="col s12 m11 l11">
-											<h5 class="breadcrumbs-title mt-0 mb-0"><span>Crear ${seccion_legible}</span></h5>
+											<h5 class="breadcrumbs-title mt-0 mb-0"><span>Editar ${seccion_legible}</span></h5>
 										</div>
 										<span class="modal-action modal-close"><i class="material-icons">close</i></span>
 									</div>
@@ -640,6 +701,9 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																			</a>
 																		</div>
 																	</div>
+																	<div class="col s12 m12">
+																		<div class="form-error" id="error.archivos_input-0"></div>
+																	</div>
 																</div>
 															</div>
 														</li>
@@ -654,22 +718,22 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																	<div class="col s12 m8 input-field">
 																		<input type="text" name="prd_nombre" id="prd_nombre" autocomplete="off" placeholder="" onkeyup="validar(this)">
 																		<label>Nombre<i class="requerido">*</i></label>
-																		<div class="form-error" id=""></div>
+																		<div class="form-error" id="error.prd_nombre"></div>
 																	</div>
 																	<div class="col s12 m4 input-field">
 																		<input type="text" name="prd_referencia" id="prd_referencia" autocomplete="off" placeholder="" onkeyup="validar(this)">
-																		<label>Referencia<i class="requerido">*</i></label>
-																		<div class="form-error" id=""></div>
+																		<label>Referencia</label>
+																		<div class="form-error" id="error.prd_referencia"></div>
 																	</div>
 																	<div class="col s12 m12">
 																		<label>Descripción<i class="requerido">*</i></label>
-																		<textarea class="materialize-textarea" name="prd_descripcioncorta" id="prd_descripcioncorta"></textarea>
-																		<div class="form-error" id=""></div>
+																		<textarea class="materialize-textarea" name="prd_descripcioncorta" id="prd_descripcioncorta" onkeyup="validar(this)"></textarea>
+																		<div class="form-error" id="error.prd_descripcioncorta"></div>
 																	</div>
 																	<div class="col s12 m12">
 																		<label>Descripción larga<i class="requerido">*</i></label>
-																		<textarea id="prd_descripcionlarga" name="prd_descripcionlarga"></textarea>
-																		<div class="form-error" id=""></div>
+																		<textarea id="prd_descripcionlarga" name="prd_descripcionlarga" onkeyup="validar(this)"></textarea>
+																		<div class="form-error" id="error.prd_descripcionlarga"></div>
 																	</div>
 																</div>
 															</div>
@@ -685,12 +749,12 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																	<div class="col s12 m12 input-field">
 																		<input type="text" name="prd_metatitulo" id="prd_metatitulo" autocomplete="off" placeholder="" onkeyup="validar(this)">
 																		<label>Titulo</label>
-																		<div class="form-error" id=""></div>
+																		<div class="form-error" id="error.prd_metatitulo"></div>
 																	</div>
 																	<div class="col s12 m12">
 																		<label>Descripción</label>
 																		<textarea class="materialize-textarea" name="prd_metadescripcion" id="prd_metadescripcion"></textarea>
-																		<div class="form-error" id=""></div>
+																		<div class="form-error" id="error.prd_metadescripcion"></div>
 																	</div>
 																	<div class="col s12 m12">
 																		<label>Keywords</label>
@@ -725,7 +789,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																<div class="row m-0">
 																	<div class="col s12 m6 input-field">
 																		<input type="text" name="prd_precio" id="prd_precio" autocomplete="off" placeholder="" onkeyup="validar(this); ajustar_valor(this)" onchange="calcularPromocion()" value="0">
-																		<label>Precio</label>
+																		<label>Precio<i class="requerido">*</i></label>
 																	</div>
 																	<div class="col s12 m6">
 																		<div class="switch custom-switch mt-30">
@@ -748,9 +812,13 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 															<div class="collapsible-header">Categorias</div>
 															<div class="collapsible-body">
 																<div class="row m-0">
-																	${optionCategorias}
 																	<div class="col s12 m12">
-																		<input type="text" name="" id="" autocomplete="off" placeholder="Agregar Categoria">
+																		<label>Categorias<i class="requerido">*</i></label>
+																		<select name="pct_id[]" id="pct_id" multiple>
+																			<option value="" selected disabled>Seleccióne una opción</option>
+																			${optionCategorias}
+																		</select>
+																		<div class="form-error" id="error.pct_id"></div>
 																	</div>
 																</div>
 															</div>
@@ -790,6 +858,39 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																			</label>
 																		</div>
 																	</div>
+																	<div class="col s12 m4 center-align">
+																		<div class="switch custom-switch">
+																			<label>
+																				<input type="checkbox" id="prd_nuevo" name="prd_nuevo">
+																				<span class="lever custom-leaver"></span>
+																				Nuevo <br> Producto
+																			</label>
+																		</div>
+																	</div>
+																</div>
+															</div>
+														</li>
+													</ul>
+												</div>
+												<div class="col s12 m12">
+													<ul class="collapsible custom-collapsible">
+														<li class="active">
+															<div class="collapsible-header">PRODUCTOS RELACIONADOS</div>
+															<div class="collapsible-body">
+																<div class="row">
+																	<div class="col s12 m9 select">
+																		<select id="prd_relacionado" onchange="validar(this)">
+																			<option value="">Seleccione una opción</option>
+																			${optionsRelacionado}
+																		</select>
+																		<div id="error.prd_relacionado" class="form-error"></div>
+																	</div>
+																	<div class="col s12 m3">
+																		<a id="agregar-realacionado" class="btn waves-effect waves-light btnppal azulclaro"><i class="material-icons">check</i></a>
+																	</div>
+																	<div class="col s12 m12">
+																		<ul class="collection" id="realacionado-collection"></ul>
+																	</div>
 																</div>
 															</div>
 														</li>
@@ -803,8 +904,8 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							<div class="modal-footer">
 								<div class="row m-0">
 									<div class="col s12 m4 offset-m8">
-										<input type="hidden" name="action" id="action" value="crear">
-										<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Crear ${seccion_legible}</button>
+										<input type="hidden" name="action" id="action" value="editar">
+										<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Editar ${seccion_legible}</button>
 									</div>
 								</div>
 							</div>
@@ -814,6 +915,347 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							plugins: ['remove_button'],
 							create: (input) => {
 								return { value: input, text: input }
+							}
+						});
+						$('#prd_relacionado').selectize({
+							onChange: (value) => {
+								if(value != "") {
+									document.getElementById("error.prd_relacionado").innerHTML = "";
+								}
+							}
+						});
+						$('.collapsible').collapsible();
+						$('.chips').chips();
+						$('.dropify').dropify({
+							messages: {
+								'default': 'Selecciona o arrastra una imagen de perfil',
+								'replace': 'Selecciona o arrastra una imagen de perfil',
+								'remove':  'eliminar',
+								'error':   'Ooops, Algo ha salido mal',
+							},
+						});
+
+						const editor = document.querySelector('#prd_descripcionlarga');
+						ClassicEditor
+							.create(editor, basicCkeditor)
+							.catch(error => { console.error( error ); } );
+
+						document.getElementById("agregar-realacionado").addEventListener("click", aniadirRelacionados, false);
+						M.updateTextFields();
+						validacion_productos(modulo);
+					}
+		
+				} else {
+					M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
+					$(`#modal-${modulo}`).modal('close');	
+				}
+			}
+		}
+
+		// Configura el Modal y lo Abre 
+		$('#modal-'+modulo).modal({dismissible: false});
+		var instance = M.Modal.getInstance(modal);
+		instance.open();
+	}
+	else
+	if(seccion == "producto_editar")
+	{
+		const modulo = "productos";
+		const seccion_singular = "producto";
+		const seccion_legible = "Producto";
+
+		const modal = document.getElementById(`modal-${modulo}`);
+		modal.innerHTML = loaderComponent();
+
+		var xhr = new XMLHttpRequest();
+		var params 	= `idioma=${cms_idioma}&id=${id}&action=obtener_editar`;
+		xhr.open("POST", `inc/${modulo}.php`,true);
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.send(params);
+		xhr.onreadystatechange = function()
+		{
+			if(xhr.readyState == 4)
+			{
+				if(xhr.status == 200)
+				{
+					data = xhr.responseText.trim();
+					// console.log(data);
+					if(data < 0) {
+						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
+						$(`#modal-${modulo}`).modal('close');
+					} else {
+
+						const tmp = data.split("::");
+						const datos = JSON.parse(tmp[0]);
+						const categorias = JSON.parse(tmp[1]);
+						const productos = JSON.parse(tmp[2]);
+
+						let optionCategorias = "";
+						for (var i = 0; i < categorias.length; i++) {
+							optionCategorias = optionCategorias + `<option value="${categorias[i]['pct_id']}">${categorias[i]['pct_nombre']}</option>`;
+						}
+
+						let optionsRelacionado = "";
+						for (var i = 0; i < productos.length; i++) {
+							optionCategorias = optionCategorias + `<option value="${productos[i]['prd_id']}">${productos[i]['prd_nombre']}</option>`;
+						}
+
+
+						modal.innerHTML = `
+						<form method="POST" id="${seccion_singular}_form">
+							<div id="breadcrumbs-wrapper" class="breadcrumbs-bg-image">
+								<div class="container mt-0">
+									<div class="row mb-0">
+										<div class="col s12 m11 l11">
+											<h5 class="breadcrumbs-title mt-0 mb-0"><span>Editar ${seccion_legible}</span></h5>
+										</div>
+										<span class="modal-action modal-close"><i class="material-icons">close</i></span>
+									</div>
+								</div>
+							</div>
+							<div class="modal-content">
+								<div class="panel">
+									<input type="hidden" name="archivos_input-0" id="archivos_input-0" value="">
+									<div class="row">
+										<div class="col s12 m8 p-0">
+											<div class="row m-0">
+												<div class="col s12 m12">
+													<ul class="collapsible custom-collapsible">
+														<li class="active">
+															<div class="collapsible-header">Imagenes<i class="requerido">*</i></div>
+															<div class="collapsible-body">
+																<div class="row m-0">
+																	<div class="col s12 m12">
+																		<div class="archivos-container" id="archivosC-0">
+																			<a class="archivo" onclick="cargar_archivos(0, 'imagena')">
+																				<div class="archivo-container">
+																					<img src="img/tipos/mas.png" alt="" loading="lazy">
+																				</div>
+																				<div class="archivo-footer">Cargar Imágenes</div>
+																			</a>
+																		</div>
+																	</div>
+																	<div class="col s12 m12">
+																		<div class="form-error" id="error.archivos_input-0"></div>
+																	</div>
+																</div>
+															</div>
+														</li>
+													</ul>
+												</div>
+												<div class="col s12 m12">
+													<ul class="collapsible custom-collapsible">
+														<li class="active">
+															<div class="collapsible-header">Información del producto</div>
+															<div class="collapsible-body">
+																<div class="row m-0">
+																	<div class="col s12 m8 input-field">
+																		<input type="text" name="prd_nombre" id="prd_nombre" autocomplete="off" placeholder="" onkeyup="validar(this)">
+																		<label>Nombre<i class="requerido">*</i></label>
+																		<div class="form-error" id="error.prd_nombre"></div>
+																	</div>
+																	<div class="col s12 m4 input-field">
+																		<input type="text" name="prd_referencia" id="prd_referencia" autocomplete="off" placeholder="" onkeyup="validar(this)">
+																		<label>Referencia</label>
+																		<div class="form-error" id="error.prd_referencia"></div>
+																	</div>
+																	<div class="col s12 m12">
+																		<label>Descripción<i class="requerido">*</i></label>
+																		<textarea class="materialize-textarea" name="prd_descripcioncorta" id="prd_descripcioncorta"></textarea>
+																		<div class="form-error" id="error.prd_descripcioncorta"></div>
+																	</div>
+																	<div class="col s12 m12">
+																		<label>Descripción larga<i class="requerido">*</i></label>
+																		<textarea id="prd_descripcionlarga" name="prd_descripcionlarga"></textarea>
+																		<div class="form-error" id="error.prd_descripcionlarga"></div>
+																	</div>
+																</div>
+															</div>
+														</li>
+													</ul>
+												</div>
+												<div class="col s12 m12">
+													<ul class="collapsible custom-collapsible">
+														<li class="active">
+															<div class="collapsible-header">SEO</div>
+															<div class="collapsible-body">
+																<div class="row m-0">
+																	<div class="col s12 m12 input-field">
+																		<input type="text" name="prd_metatitulo" id="prd_metatitulo" autocomplete="off" placeholder="" onkeyup="validar(this)">
+																		<label>Titulo</label>
+																		<div class="form-error" id="error.prd_metatitulo"></div>
+																	</div>
+																	<div class="col s12 m12">
+																		<label>Descripción</label>
+																		<textarea class="materialize-textarea" name="prd_metadescripcion" id="prd_metadescripcion"></textarea>
+																		<div class="form-error" id="error.prd_metadescripcion"></div>
+																	</div>
+																	<div class="col s12 m12">
+																		<label>Keywords</label>
+																		<div class="chips" id="prd_metakeywords"></div>
+																	</div>
+																	<div class="col s12 m6 mt-10">
+																		<label>Imagen 1200x630</label>
+																		<input type="file" id="prd_metaimagena" name="prd_metaimagena" class="dropify" data-default-file="" onchange="validar(this)" data-max-width="1200" accept="image/.png, .jpg, .jpeg, .gif">
+																		<label>Únicos formatos admitidos jpg, png, gif</label>
+																		<div id="error.prd_metaimagena" class="form-error"></div>
+																	</div>
+																	<div class="col s12 m6 mt-10">
+																		<label>Imagen 200x200</label>
+																		<input type="file" id="prd_metaimagenb" name="prd_metaimagenb" class="dropify" data-default-file="" onchange="validar(this)" data-max-width="210" accept="image/.png, .jpg, .jpeg, .gif">
+																		<label>Únicos formatos admitidos jpg, png, gif</label>
+																		<div id="error.prd_metaimagenb" class="form-error"></div>
+																	</div>
+																</div>
+															</div>
+														</li>
+													</ul>
+												</div>
+											</div>
+										</div>
+										<div class="col s12 m4 p-0">
+											<div class="row m-0">
+												<div class="col s12 m12">
+													<ul class="collapsible custom-collapsible">
+														<li class="active">
+															<div class="collapsible-header">Precios</div>
+															<div class="collapsible-body">
+																<div class="row m-0">
+																	<div class="col s12 m6 input-field">
+																		<input type="text" name="prd_precio" id="prd_precio" autocomplete="off" placeholder="" onkeyup="validar(this); ajustar_valor(this)" onchange="calcularPromocion()" value="0">
+																		<label>Precio<i class="requerido">*</i></label>
+																	</div>
+																	<div class="col s12 m6">
+																		<div class="switch custom-switch mt-30">
+																			<label>
+																				<input type="checkbox" id="switch-oferta" name="prd_oferta" onchange="activarPromocion(this)">
+																				<span class="lever custom-leaver"></span>
+																				Oferta
+																			</label>
+																		</div>
+																	</div>
+																	<div class="col s12 m12 p-0" id="oferta-container"></div>
+																</div>
+															</div>
+														</li>
+													</ul>
+												</div>
+												<div class="col s12 m12">
+													<ul class="collapsible custom-collapsible">
+														<li class="active">
+															<div class="collapsible-header">Categorias</div>
+															<div class="collapsible-body">
+																<div class="row m-0">
+																	<div class="col s12 m12">
+																		<label>Categorias<i class="requerido">*</i></label>
+																		<select name="pct_id[]" id="pct_id" multiple>
+																			<option value="" selected disabled>Seleccióne una opción</option>
+																			${optionCategorias}
+																		</select>
+																		<div class="form-error" id="error.pct_id"></div>
+																	</div>
+																</div>
+															</div>
+														</li>
+													</ul>
+												</div>
+												<div class="col s12 m12">
+													<ul class="collapsible custom-collapsible">
+														<li class="active">
+															<div class="collapsible-header">Opciones</div>
+															<div class="collapsible-body">
+																<div class="row m-0">
+																	<div class="col s12 m4 center-align">
+																		<div class="switch custom-switch">
+																			<label>
+																				<input type="checkbox" id="prd_mostrar" name="prd_mostrar">
+																				<span class="lever custom-leaver"></span>
+																				Mostrar <br> Producto
+																			</label>
+																		</div>
+																	</div>
+																	<div class="col s12 m4 center-align">
+																		<div class="switch custom-switch">
+																			<label>
+																				<input type="checkbox" id="prd_destacado" name="prd_destacado">
+																				<span class="lever custom-leaver"></span>
+																				Destacar <br> Producto
+																			</label>
+																		</div>
+																	</div>
+																	<div class="col s12 m4 center-align">
+																		<div class="switch custom-switch">
+																			<label>
+																				<input type="checkbox" id="prd_vendido" name="prd_vendido">
+																				<span class="lever custom-leaver"></span>
+																				¿Más Vendido?
+																			</label>
+																		</div>
+																	</div>
+																	<div class="col s12 m4 center-align">
+																		<div class="switch custom-switch">
+																			<label>
+																				<input type="checkbox" id="prd_nuevo" name="prd_nuevo">
+																				<span class="lever custom-leaver"></span>
+																				Nuevo <br> Producto
+																			</label>
+																		</div>
+																	</div>
+																</div>
+															</div>
+														</li>
+													</ul>
+												</div>
+												<div class="col s12 m12">
+													<ul class="collapsible custom-collapsible">
+														<li class="active">
+															<div class="collapsible-header">PRODUCTOS RELACIONADOS</div>
+															<div class="collapsible-body">
+																<div class="row">
+																	<div class="col s12 m9 select">
+																		<select id="prd_relacionado" onchange="validar(this)">
+																			<option value="">Seleccione una opción</option>
+																			${optionsRelacionado}
+																		</select>
+																		<div id="error.prd_relacionado" class="form-error"></div>
+																	</div>
+																	<div class="col s12 m3">
+																		<a id="agregar-realacionado" class="btn waves-effect waves-light btnppal azulclaro"><i class="material-icons">check</i></a>
+																	</div>
+																	<div class="col s12 m12">
+																		<ul class="collection" id="realacionado-collection"></ul>
+																	</div>
+																</div>
+															</div>
+														</li>
+													</ul>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<div class="row m-0">
+									<div class="col s12 m4 offset-m8">
+										<input type="hidden" name="action" id="action" value="editar">
+										<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Editar ${seccion_legible}</button>
+									</div>
+								</div>
+							</div>
+						</form>`;
+
+						$('#pct_id').selectize({
+							plugins: ['remove_button'],
+							create: (input) => {
+								return { value: input, text: input }
+							}
+						});
+						$('#prd_relacionado').selectize({
+							onChange: (value) => {
+								if(value != "") {
+									document.getElementById("error.prd_relacionado").innerHTML = "";
+								}
 							}
 						});
 						$('.collapsible').collapsible();
@@ -830,6 +1272,8 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 						ClassicEditor
 							.create(document.querySelector('#prd_descripcionlarga'), basicCkeditor)
 							.catch(error => { console.error( error ); } );
+
+						document.getElementById("agregar-realacionado").addEventListener("click", aniadirRelacionados, false);
 						M.updateTextFields();
 
 						

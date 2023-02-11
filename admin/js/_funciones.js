@@ -941,19 +941,32 @@ const activarPromocion = (cmp) => {
 		container.innerHTML = `
 		<div class="row m-0">
 			<div class="col s12 m6 input-field">
-				<input type="text" name="prd_descuento" id="prd_descuento" autocomplete="off" placeholder="" onkeyup="validar(this)" onchange="calcularPromocion()">
+				<input type="text" name="prd_porcentajepromocion" id="prd_porcentajepromocion" autocomplete="off" placeholder="" onkeyup="validar(this)" onchange="calcularPromocion()" value="0">
 				<label>Descuento (%)</label>
+				<div class="form-error" id="error.prd_porcentajepromocion"></div>
 			</div>
 			<div class="col s12 m6 input-field">
-				<input type="text" name="prd_promocion" id="prd_promocion" autocomplete="off" placeholder="" onkeyup="validar(this)" readonly>
+				<input type="text" name="prd_preciopromocion" id="prd_preciopromocion" autocomplete="off" placeholder="" onkeyup="validar(this)" readonly>
 				<label>Precio en oferta</label>
+				<div class="form-error" id="error.prd_preciopromocion"></div>
 			</div>
 		</div>`;
 
 		// TODO: Agregar Validaciones
+		validaciones_global.push(
+			['prd_porcentajepromocion', '','required'],
+			['prd_preciopromocion', 	'','required']
+		);
 
 	} else {
 		container.innerHTML = ``;
+		validaciones_global.map((validacion, i) => {
+			if(validacion[0] == "prd_porcentajepromocion") {
+				console.log(i);
+				validaciones_global.splice(i, 0);
+			}
+			
+		})
 	}
 
 	M.updateTextFields();
@@ -963,9 +976,47 @@ const calcularPromocion = () => {
 	
 	const precioTmp = document.getElementById('prd_precio') != null ? document.getElementById('prd_precio').value : 0;
 	const precio = desajustar_valor(precioTmp);
-	const porcentaje = document.getElementById('prd_descuento') != null ? document.getElementById('prd_descuento').value : 0;
+	const porcentaje = document.getElementById('prd_porcentajepromocion') != null ? document.getElementById('prd_porcentajepromocion').value : 0;
 	const descuento = parseFloat(precio) * parseFloat(porcentaje) / 100;
 	const total = parseFloat(precio) - parseFloat(descuento);
 
-	document.getElementById("prd_promocion").value = ajustarPrecio(total);
+	if(document.getElementById("prd_preciopromocion") != null) {
+		document.getElementById("prd_preciopromocion").value = ajustarPrecio(total);
+	}
 }
+
+// TODO: 
+const aniadirRelacionados = (e) => {
+	e.preventDefault();
+
+	const select = document.getElementById("prd_relacionado");
+	const option = select.querySelector('option[selected]');
+	const id = select.value;
+	const producto = option.innerHTML;
+
+	if(id) {
+
+		let contenido = `
+		<li class="collection-item custom-item" id="rel-${id}">
+			<input type="hidden" name="prd_relacionado[]" value="${id}">
+			<span class="custom-title">${producto}</span>
+			<div class="item-actions">
+				<a onclick="eliminar_relacionado(this)" idC="rel-${id}" class="button-item btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar"><i class="material-icons">close</i></a>
+			</div>
+		</li>`;
+
+		$('#realcionado-collection').append(contenido);
+		const $relacionado = $('#prd_relacionado').selectize();
+		const control = $relacionado[0].selectize;
+		control.clear();
+
+
+	} else {
+		document.getElementById("error.prd_relacionado").innerHTML = "Debe seleccionar un producto primero.";
+	}
+}
+
+// TODO: Remover acentos / Tildes String
+const removeAccents = (str) => {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+} 

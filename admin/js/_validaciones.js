@@ -235,11 +235,23 @@ const validacion_productos = (seccion) => {
 	formulario.addEventListener("submit", (e) => {
 		e.preventDefault();
 
-		const boton = document.getElementById(`${seccion_singular}_form`);
+		const boton = document.getElementById(`action_${seccion_singular}`);
 		boton.setAttribute("disabled", "disabled");
 
-		const validaciones = [];
-		const respuesta = validar_formulario(validaciones, false);
+		validaciones_global.push(
+			['archivos_input-0', 		'', 'required'],
+			['prd_nombre', 				'', 'required', 'length=1,100'],
+			['prd_referencia',			'', 'lengthPass=1,50'],
+			['prd_descripcioncorta',	'', 'required', 'length=1, 255'],
+			['prd_descripcionlarga',	'', 'required'],
+			['prd_metatitulo',			'', 'lengthPass=1,100'],
+			['prd_metadescripcion',		'', 'lengthPass=1,255'],
+			['prd_metadescripcion',		'', 'lengthPass=1,255'],
+			['prd_precio',				'', 'required', 'precio'],
+			['pct_id',					'', 'required'],
+		);
+		console.log(validaciones_global);
+		const respuesta = validar_formulario(validaciones_global, false);
 		if(respuesta) {
 
 			let prd_metakeywords = "";
@@ -265,9 +277,19 @@ const validacion_productos = (seccion) => {
 						data = xhr.responseText.trim();
 						console.log(data);
 						if(data < 0) {
-							M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: data`, classes: 'toasterror'});
+							M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
 						} else {
 							
+							if(id == 0)
+								M.toast({html: `La ${seccion_legible} se ha creado correctamente.`, classes: 'toastdone'});
+							else
+								M.toast({html: `La ${seccion_legible} se ha editado correctamente.`, classes: 'toastdone'});
+
+							// $(`#modal-${seccion}`).modal('close');
+							var variables = obtener_variables();
+							// formulario.innerHTML = "";
+							cargar_registros(seccion, variables[0],variables[1]);
+
 						}
 			
 					} else {
@@ -407,7 +429,7 @@ const validar_formulario = (validaciones, toast = false) => {
 	var tmp = "";
 	validaciones.forEach(function(validacion, i){
 
-		// console.log(validacion[0])
+		console.log(validacion[0])
 		if(validacion[0]) 
 		{
 			var valor = document.getElementById(validacion[0]).value;
