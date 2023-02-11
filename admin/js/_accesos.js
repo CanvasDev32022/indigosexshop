@@ -8,5 +8,9 @@ var accesos_botones = {
 	// TODO: Clientes
 
 	// TODO: Productos
-	"producto_crear": 			"0,1",
+	'producto_crear': 			"0,1",
+	'producto_editar': 			"0,1",
+	'producto_ver': 			"0,1",
+	'producto_eliminar': 		"0,1",
+	'producto_variaciones': 	"0,1",
 }

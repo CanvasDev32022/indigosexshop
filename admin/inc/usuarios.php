@@ -14,7 +14,7 @@
 		$idioma		= $_POST['idioma'];
 		$busqueda 	= $_POST['busqueda'];
 		$pagina		= $_POST['pagina'];
-		$max		= $cms_max_results['usuarios'];
+		$max		= $cms_max_results['general'];
 		$busqueda = "%".$busqueda."%";
 
 		$prepare 	= "SELECT COUNT(1) AS registros FROM usuarios usr INNER JOIN roles rol ON rol.rol_id = usr.rol_id INNER JOIN _estados est ON est.est_id = usr.est_id WHERE usr_borrado = 0 AND (usr_nombres LIKE ? OR usr_apellidos LIKE ? OR rol.rol_nombre LIKE ? OR est.est_nombre_$idioma LIKE ?)";
