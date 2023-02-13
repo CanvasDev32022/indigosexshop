@@ -1,9 +1,5 @@
 <?php
 	// TODO: CONFIG DATABASE SERVER
-	// define("SERVER","localhost");
-	// define("DB","wwcanv_movimientos_skw7fdozwhbjn4jjm3tl");
-	// define("USER","wwcanv_ztek_user");
-	// define("PASS","E-cW99IE7wAa");
 
 	// TODO: CONFIG DATABASE LOCAL
 	define("SERVER", "");

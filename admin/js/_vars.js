@@ -5,6 +5,14 @@ let cms_datos = [];
 let rol_global = 0;
 let validaciones_global = [];
 
+// TODO: Tipos de variación
+const variaciones_tipos = [
+	{'id':1, 'tipo':'Lista'},
+	{'id':2, 'tipo':'Color'},
+	// {'id':2, 'tipo':'Imagen'},
+	
+];
+
 // TODO: Arreglo de meses para graficas
 const meses = [
 	{id:1, name:'Enero'}, 
