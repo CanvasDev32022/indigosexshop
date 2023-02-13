@@ -72,6 +72,7 @@ RewriteRule ^dashboard 					index.php [QSA,L]
 RewriteRule ^usuarios 					usuarios.php [QSA,L]
 RewriteRule ^clientes 					clientes.php [QSA,L]
 RewriteRule ^productos 					productos.php [QSA,L]
+RewriteRule ^producto-variaciones       pvariaciones.php [QSA,L]
 
 #Request 
 #RewriteRule ^404 error.php

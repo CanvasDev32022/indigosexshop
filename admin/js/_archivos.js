@@ -150,7 +150,7 @@ const eliminar_archivo = (cmp, item) => {
 }
 
 // TODO: FUNCION PARA ANULAR ARCHIVOS
-const anular_archivo = (cmp) => {
+const anular_archivo = (cmp, item) => {
 
 	const archivo = cmp.getAttribute("archivo"); 
 	Swal.fire({
@@ -170,12 +170,12 @@ const anular_archivo = (cmp) => {
 			
 			M.toast({html: "El registro ha sido eliminado correctamente.", classes: 'toastdone'});
 			const id = cmp.getAttribute("idC");
-			const padre = document.getElementById("archivosC");
+			const padre = document.getElementById(`archivosC-${item}`);
 			const hijo = document.getElementById(id);
 			padre.removeChild(hijo);
 
 			let nuevos = [];
-			const archivos = document.getElementById('archivos_input').value.split(";;");
+			const archivos = document.getElementById(`archivos_input-${item}`).value.split(";;");
 			archivos.forEach((arc) => {
 				const tmp = arc.split("||");
 				const tmp2 = archivo.split("/");
@@ -184,7 +184,7 @@ const anular_archivo = (cmp) => {
 					nuevos.push(arc);
 			});
 
-			document.getElementById('archivos_input').value = nuevos.join(";;");
+			document.getElementById(`archivos_input-${item}`).value = nuevos.join(";;");
 		}
 	});
 }

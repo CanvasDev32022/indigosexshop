@@ -901,12 +901,12 @@ const color_aleatorio = () => {
 }
 
 // TODO: CheckBox dinamico
-const checkedInput = (cmp, id) => {
+const checkedInput = (cmp, id, action="checked") => {
 
 	const seccion = cmp.getAttribute("data-input");
 	const activo = cmp.checked ? 1 : 0;
 	var xhr = new XMLHttpRequest();
-	var params 	= `idioma=${cms_idioma}&activo=${activo}&id=${id}&action=checked`;
+	var params 	= `idioma=${cms_idioma}&activo=${activo}&id=${id}&action=${action}`;
 	xhr.open("POST", `inc/${seccion}.php`,true);
 	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	xhr.send(params);
@@ -931,9 +931,8 @@ const checkedInput = (cmp, id) => {
 	}
 }
 
-
-// TODO: 
-const activarPromocion = (cmp) => {
+// TODO: Opciones de promocion par formulario productos
+const activarPromocion = (cmp, porentaje = 0) => {
 	const container = document.querySelector("#oferta-container");
 	const checked = cmp.checked;
 
@@ -941,7 +940,7 @@ const activarPromocion = (cmp) => {
 		container.innerHTML = `
 		<div class="row m-0">
 			<div class="col s12 m6 input-field">
-				<input type="text" name="prd_porcentajepromocion" id="prd_porcentajepromocion" autocomplete="off" placeholder="" onkeyup="validar(this)" onchange="calcularPromocion()" value="0">
+				<input type="text" name="prd_porcentajepromocion" id="prd_porcentajepromocion" autocomplete="off" placeholder="" onkeyup="validar(this)" onchange="calcularPromocion()" value="${porentaje}">
 				<label>Descuento (%)</label>
 				<div class="form-error" id="error.prd_porcentajepromocion"></div>
 			</div>
@@ -952,6 +951,7 @@ const activarPromocion = (cmp) => {
 			</div>
 		</div>`;
 
+		calcularPromocion();
 		// TODO: Agregar Validaciones
 		validaciones_global.push(
 			['prd_porcentajepromocion', '','required'],
@@ -960,18 +960,20 @@ const activarPromocion = (cmp) => {
 
 	} else {
 		container.innerHTML = ``;
-		validaciones_global.map((validacion, i) => {
-			if(validacion[0] == "prd_porcentajepromocion") {
-				console.log(i);
-				validaciones_global.splice(i, 0);
+		
+		const validaciones = [];
+		for (var i = 0; i < validaciones_global.length; i++) {
+			if(validaciones_global[i][0] != "prd_porcentajepromocion" && validaciones_global[i][0] != "prd_preciopromocion") {
+				validaciones.push(validaciones_global[i]);
 			}
-			
-		})
+		}
+		validaciones_global = validaciones;
 	}
 
 	M.updateTextFields();
 }
 
+// TODO: Calculo de promocion para formulario productos
 const calcularPromocion = () => {
 	
 	const precioTmp = document.getElementById('prd_precio') != null ? document.getElementById('prd_precio').value : 0;
@@ -985,7 +987,7 @@ const calcularPromocion = () => {
 	}
 }
 
-// TODO: 
+// TODO: funcion para añadir productos relacionados
 const aniadirRelacionados = (e) => {
 	e.preventDefault();
 
@@ -995,7 +997,6 @@ const aniadirRelacionados = (e) => {
 	const producto = option.innerHTML;
 
 	if(id) {
-
 		let contenido = `
 		<li class="collection-item custom-item" id="rel-${id}">
 			<input type="hidden" name="prd_relacionado[]" value="${id}">
@@ -1005,7 +1006,7 @@ const aniadirRelacionados = (e) => {
 			</div>
 		</li>`;
 
-		$('#realcionado-collection').append(contenido);
+		$('#relacionado-collection').append(contenido);
 		const $relacionado = $('#prd_relacionado').selectize();
 		const control = $relacionado[0].selectize;
 		control.clear();
@@ -1014,6 +1015,16 @@ const aniadirRelacionados = (e) => {
 	} else {
 		document.getElementById("error.prd_relacionado").innerHTML = "Debe seleccionar un producto primero.";
 	}
+}
+
+// TODO: Funcion para remover productos relacionados
+const eliminar_relacionado = (cmp) => {
+
+	const padre = document.getElementById("relacionado-collection");
+	const id = cmp.getAttribute("idC");
+	const hijo = padre.querySelector(`li[id="${id}"]`);
+
+	padre.removeChild(hijo);
 }
 
 // TODO: Remover acentos / Tildes String

@@ -250,7 +250,7 @@ const validacion_productos = (seccion) => {
 			['prd_precio',				'', 'required', 'precio'],
 			['pct_id',					'', 'required'],
 		);
-		console.log(validaciones_global);
+		
 		const respuesta = validar_formulario(validaciones_global, false);
 		if(respuesta) {
 
@@ -429,7 +429,7 @@ const validar_formulario = (validaciones, toast = false) => {
 	var tmp = "";
 	validaciones.forEach(function(validacion, i){
 
-		console.log(validacion[0])
+		// console.log(validacion[0])
 		if(validacion[0]) 
 		{
 			var valor = document.getElementById(validacion[0]).value;
@@ -534,7 +534,7 @@ const validar_formulario = (validaciones, toast = false) => {
 				if(tmp[0] == 'precio')
 				{
 					var precio = desajustar_valor(valor);
-					if(!(/^-?\d+$/.test(precio)))
+					if(isNaN(precio))
 					{
 						errores.push([validacion[0], "El precio debe ser válido. Ej: $1.000", "El precio debe ser válido. Ej: $1.000"]);
 						break;

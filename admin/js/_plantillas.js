@@ -573,7 +573,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 			botones_accesos = botones_accesos + `<a href="/${datos['prd_id']}/producto/${slug_producto}" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Ver ${seccion_legible}"><i class="material-icons">visibility</i></a>`;
 
 		if(validar_acceso('producto_variaciones', rol))
-			botones_accesos = botones_accesos + `<a onclick="plantillas('${seccion_singular}_variaciones','', '', '${pagina}','${busqueda}',${datos['prd_id']})" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Variaciones"><i class="material-icons">spoke</i></a>`;
+			botones_accesos = botones_accesos + `<a href="producto-variaciones?s=${busqueda}&p=${pagina}&c=${datos['prd_id']}" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Variaciones"><i class="material-icons">spoke</i></a>`;
 
 		if(validar_acceso('producto_editar', rol))
 			botones_accesos = botones_accesos + `<a onclick="plantillas('${seccion_singular}_editar','', '', '${pagina}','${busqueda}',${datos['prd_id']})" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Editar ${seccion_legible}"><i class="material-icons">edit</i></a>`;
@@ -589,7 +589,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 		const imagen = `../uploads/productos/${tmpImagen[1]}`;
 
 		let estado = datos['prs_nombre'];
-		let precioContainer = `<td>${ajustarPrecio(datos['prd_precio'])}<td>`;
+		let precioContainer = `<td>${ajustarPrecio(datos['prd_precio'])}</td>`;
 		if(datos['prd_promocion']) {
 			estado = "Promoción";
 			precioContainer = `<td>${ajustarPrecio(datos['prd_preciopromocion'])} - <span class="tachado">${ajustarPrecio(datos['prd_precio'])}</span></td>`;
@@ -605,7 +605,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 		<td>
 			<div class="switch custom-switch">
 				<label>
-					<input type="checkbox" id="prd_visible" name="prd_visible" ${mostrar}>
+					<input type="checkbox" id="prd_visible" name="prd_visible" ${mostrar} onclick="checkedInput(this, ${datos['prd_id']}, 'mostrar')" data-input="productos">
 					<span class="lever custom-leaver"></span>
 				</label>
 			</div>
@@ -613,7 +613,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 		<td>
 			<div class="switch custom-switch">
 				<label>
-					<input type="checkbox" id="prd_destacado" name="prd_destacado" ${destacar}>
+					<input type="checkbox" id="prd_destacado" name="prd_destacado" ${destacar} onclick="checkedInput(this, ${datos['prd_id']}, 'destacado')" data-input="productos">
 					<span class="lever custom-leaver"></span>
 				</label>
 			</div>
@@ -663,7 +663,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 
 						let optionsRelacionado = "";
 						for (var i = 0; i < productos.length; i++) {
-							optionCategorias = optionCategorias + `<option value="${productos[i]['prd_id']}">${productos[i]['prd_nombre']}</option>`;
+							optionsRelacionado = optionsRelacionado + `<option value="${productos[i]['prd_id']}">${productos[i]['prd_nombre']}</option>`;
 						}
 
 
@@ -673,7 +673,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 								<div class="container mt-0">
 									<div class="row mb-0">
 										<div class="col s12 m11 l11">
-											<h5 class="breadcrumbs-title mt-0 mb-0"><span>Editar ${seccion_legible}</span></h5>
+											<h5 class="breadcrumbs-title mt-0 mb-0"><span>Crear ${seccion_legible}</span></h5>
 										</div>
 										<span class="modal-action modal-close"><i class="material-icons">close</i></span>
 									</div>
@@ -790,6 +790,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																	<div class="col s12 m6 input-field">
 																		<input type="text" name="prd_precio" id="prd_precio" autocomplete="off" placeholder="" onkeyup="validar(this); ajustar_valor(this)" onchange="calcularPromocion()" value="0">
 																		<label>Precio<i class="requerido">*</i></label>
+																		<div class="form-error" id="error.prd_precio"></div>
 																	</div>
 																	<div class="col s12 m6">
 																		<div class="switch custom-switch mt-30">
@@ -812,7 +813,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 															<div class="collapsible-header">Categorias</div>
 															<div class="collapsible-body">
 																<div class="row m-0">
-																	<div class="col s12 m12">
+																	<div class="col s12 m12 select">
 																		<label>Categorias<i class="requerido">*</i></label>
 																		<select name="pct_id[]" id="pct_id" multiple>
 																			<option value="" selected disabled>Seleccióne una opción</option>
@@ -863,7 +864,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																			<label>
 																				<input type="checkbox" id="prd_nuevo" name="prd_nuevo">
 																				<span class="lever custom-leaver"></span>
-																				Nuevo <br> Producto
+																				Producto <br> Nuevo
 																			</label>
 																		</div>
 																	</div>
@@ -886,10 +887,10 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																		<div id="error.prd_relacionado" class="form-error"></div>
 																	</div>
 																	<div class="col s12 m3">
-																		<a id="agregar-realacionado" class="btn waves-effect waves-light btnppal azulclaro"><i class="material-icons">check</i></a>
+																		<a id="agregar-relacionado" class="btn waves-effect waves-light btnppal azulclaro"><i class="material-icons">check</i></a>
 																	</div>
 																	<div class="col s12 m12">
-																		<ul class="collection" id="realacionado-collection"></ul>
+																		<ul class="collection" id="relacionado-collection"></ul>
 																	</div>
 																</div>
 															</div>
@@ -904,8 +905,8 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							<div class="modal-footer">
 								<div class="row m-0">
 									<div class="col s12 m4 offset-m8">
-										<input type="hidden" name="action" id="action" value="editar">
-										<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Editar ${seccion_legible}</button>
+										<input type="hidden" name="action" id="action" value="crear">
+										<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Crear ${seccion_legible}</button>
 									</div>
 								</div>
 							</div>
@@ -940,7 +941,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							.create(editor, basicCkeditor)
 							.catch(error => { console.error( error ); } );
 
-						document.getElementById("agregar-realacionado").addEventListener("click", aniadirRelacionados, false);
+						document.getElementById("agregar-relacionado").addEventListener("click", aniadirRelacionados, false);
 						M.updateTextFields();
 						validacion_productos(modulo);
 					}
@@ -997,9 +998,97 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 
 						let optionsRelacionado = "";
 						for (var i = 0; i < productos.length; i++) {
-							optionCategorias = optionCategorias + `<option value="${productos[i]['prd_id']}">${productos[i]['prd_nombre']}</option>`;
+							optionsRelacionado = optionsRelacionado + `<option value="${productos[i]['prd_id']}">${productos[i]['prd_nombre']}</option>`;
 						}
 
+						// TODO: Imagenes principales
+						let contenedorImagenes = "";
+						if(datos[0]['prd_imagen'] != "") {
+							const imagenes = datos[0]['prd_imagen'].split(";;");
+							imagenes.forEach((imagen, i) => {
+
+								const titulo = imagen.split("||")[0];
+								const archivo = imagen.split("||")[1];
+
+								contenedorImagenes = `
+								<a class="archivo" id="${archivo.split(".")[0]}">
+									<span class="borrable" onclick="anular_archivo(this, 0)" idC="${archivo.split(".")[0]}" archivo="${archivo}"><i class="material-icons">close</i></span>
+									<div class="archivo-container">
+										<img src="../uploads/productos/${archivo}" alt="${titulo}" loading="lazy">
+									</div>
+									<div class="archivo-footer">${titulo}</div>
+								</a>` + contenedorImagenes;	
+							});
+						}
+						
+						// TODO: MetaKeywords (SEO)
+						let metakeywordsObj = [];
+						if(datos[0]['prd_metakeywords'] != "") {
+
+							const metakey = datos[0]['prd_metakeywords'].split(", ");
+							metakey.forEach((key, i) => {
+								metakeywordsObj.push({
+									tag: key
+								});
+							});
+						}
+
+						// TODO: Metaimagenes (SEO)
+						const metaimagena = datos[0]['prd_metaimagenc'] != "" ? `../uploads/productos/${datos[0]['prd_metaimagenc']}` : "";
+						const metaimagenb = datos[0]['prd_metaimagend'] != "" ? `../uploads/productos/${datos[0]['prd_metaimagend']}` : "";
+
+						// TODO: Promocion
+						let promocionActiva = "";
+						let contenedorPromocion = "";
+						if(datos[0]['prd_promocion']) {
+							promocionActiva = "checked";
+							contenedorPromocion = `
+							<div class="row m-0">
+								<div class="col s12 m6 input-field">
+									<input type="text" name="prd_porcentajepromocion" id="prd_porcentajepromocion" autocomplete="off" placeholder="" onkeyup="validar(this)" onchange="calcularPromocion()" value="${datos[0]['prd_porcentajepromocion']}">
+									<label>Descuento (%)</label>
+									<div class="form-error" id="error.prd_porcentajepromocion"></div>
+								</div>
+								<div class="col s12 m6 input-field">
+									<input type="text" name="prd_preciopromocion" id="prd_preciopromocion" autocomplete="off" placeholder="" onkeyup="validar(this)" readonly>
+									<label>Precio en oferta</label>
+									<div class="form-error" id="error.prd_preciopromocion"></div>
+								</div>
+							</div>`;
+						}
+						
+						// TODO: Mostrar Producto
+						const mostrarProducto = datos[0]['prd_visible'] ? "checked" : "";
+						// TODO: Destacar Producto
+						const destacarProducto = datos[0]['prd_destacado'] ? "checked" : "";
+						// TODO: Destacar Producto
+						const vendidoProducto = datos[0]['prd_vendido'] ? "checked" : "";
+						// TODO: Destacar Producto
+						const nuevoProducto = datos[0]['prd_nuevo'] ? "checked" : "";
+
+						// TODO: Productos Relacionados
+						let contenedorRelacionados = "";
+						if(datos[0]['prd_relacionado'] != "") {
+
+							const relacionados = datos[0]['prd_relacionado'].split(",");
+							relacionados.map((relacionado) => {
+							
+								for (var i = 0; i < productos.length; i++) {
+									
+									if(relacionado == productos[i]['prd_id']) {
+
+										contenedorRelacionados = contenedorRelacionados + `
+										<li class="collection-item custom-item" id="rel-${relacionado}">
+											<input type="hidden" name="prd_relacionado[]" value="${relacionado}">
+											<span class="custom-title">${productos[i]['prd_nombre']}</span>
+											<div class="item-actions">
+												<a onclick="eliminar_relacionado(this)" idC="rel-${relacionado}" class="button-item btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar"><i class="material-icons">close</i></a>
+											</div>
+										</li>`;
+									}
+								}
+							});
+						}
 
 						modal.innerHTML = `
 						<form method="POST" id="${seccion_singular}_form">
@@ -1015,7 +1104,10 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							</div>
 							<div class="modal-content">
 								<div class="panel">
-									<input type="hidden" name="archivos_input-0" id="archivos_input-0" value="">
+									<input type="hidden" name="prd_id" id="prd_id" value="${datos[0]['prd_id']}">
+									<input type="hidden" name="archivos_input-0" id="archivos_input-0" value="${datos[0]['prd_imagen']}">
+									<input type="hidden" name="prd_metaimagenaC" id="prd_metaimagenaC" value="${datos[0]['prd_metaimagenc']}">
+									<input type="hidden" name="prd_metaimagenbC" id="prd_metaimagenbC" value="${datos[0]['prd_metaimagend']}">
 									<div class="row">
 										<div class="col s12 m8 p-0">
 											<div class="row m-0">
@@ -1027,6 +1119,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																<div class="row m-0">
 																	<div class="col s12 m12">
 																		<div class="archivos-container" id="archivosC-0">
+																			${contenedorImagenes}
 																			<a class="archivo" onclick="cargar_archivos(0, 'imagena')">
 																				<div class="archivo-container">
 																					<img src="img/tipos/mas.png" alt="" loading="lazy">
@@ -1050,23 +1143,23 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 															<div class="collapsible-body">
 																<div class="row m-0">
 																	<div class="col s12 m8 input-field">
-																		<input type="text" name="prd_nombre" id="prd_nombre" autocomplete="off" placeholder="" onkeyup="validar(this)">
+																		<input type="text" name="prd_nombre" id="prd_nombre" autocomplete="off" placeholder="" onkeyup="validar(this)" value="${datos[0]['prd_nombre']}">
 																		<label>Nombre<i class="requerido">*</i></label>
 																		<div class="form-error" id="error.prd_nombre"></div>
 																	</div>
 																	<div class="col s12 m4 input-field">
-																		<input type="text" name="prd_referencia" id="prd_referencia" autocomplete="off" placeholder="" onkeyup="validar(this)">
+																		<input type="text" name="prd_referencia" id="prd_referencia" autocomplete="off" placeholder="" onkeyup="validar(this)" value="${datos[0]['prd_referencia']}">
 																		<label>Referencia</label>
 																		<div class="form-error" id="error.prd_referencia"></div>
 																	</div>
 																	<div class="col s12 m12">
 																		<label>Descripción<i class="requerido">*</i></label>
-																		<textarea class="materialize-textarea" name="prd_descripcioncorta" id="prd_descripcioncorta"></textarea>
+																		<textarea class="materialize-textarea" name="prd_descripcioncorta" id="prd_descripcioncorta" onkeyup="validar(this)">${datos[0]['prd_descripcion_corta']}</textarea>
 																		<div class="form-error" id="error.prd_descripcioncorta"></div>
 																	</div>
 																	<div class="col s12 m12">
 																		<label>Descripción larga<i class="requerido">*</i></label>
-																		<textarea id="prd_descripcionlarga" name="prd_descripcionlarga"></textarea>
+																		<textarea id="prd_descripcionlarga" name="prd_descripcionlarga" onkeyup="validar(this)">${datos[0]['prd_descripcion_larga']}</textarea>
 																		<div class="form-error" id="error.prd_descripcionlarga"></div>
 																	</div>
 																</div>
@@ -1081,13 +1174,13 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 															<div class="collapsible-body">
 																<div class="row m-0">
 																	<div class="col s12 m12 input-field">
-																		<input type="text" name="prd_metatitulo" id="prd_metatitulo" autocomplete="off" placeholder="" onkeyup="validar(this)">
+																		<input type="text" name="prd_metatitulo" id="prd_metatitulo" autocomplete="off" placeholder="" onkeyup="validar(this)" value="${datos[0]['prd_metatitulo']}">
 																		<label>Titulo</label>
 																		<div class="form-error" id="error.prd_metatitulo"></div>
 																	</div>
 																	<div class="col s12 m12">
 																		<label>Descripción</label>
-																		<textarea class="materialize-textarea" name="prd_metadescripcion" id="prd_metadescripcion"></textarea>
+																		<textarea class="materialize-textarea" name="prd_metadescripcion" id="prd_metadescripcion">${datos[0]['prd_metadescripcion']}</textarea>
 																		<div class="form-error" id="error.prd_metadescripcion"></div>
 																	</div>
 																	<div class="col s12 m12">
@@ -1096,13 +1189,13 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																	</div>
 																	<div class="col s12 m6 mt-10">
 																		<label>Imagen 1200x630</label>
-																		<input type="file" id="prd_metaimagena" name="prd_metaimagena" class="dropify" data-default-file="" onchange="validar(this)" data-max-width="1200" accept="image/.png, .jpg, .jpeg, .gif">
+																		<input type="file" id="prd_metaimagena" name="prd_metaimagena" class="dropify" data-default-file="${metaimagena}" onchange="validar(this)" data-max-width="1200" accept="image/.png, .jpg, .jpeg, .gif">
 																		<label>Únicos formatos admitidos jpg, png, gif</label>
 																		<div id="error.prd_metaimagena" class="form-error"></div>
 																	</div>
 																	<div class="col s12 m6 mt-10">
 																		<label>Imagen 200x200</label>
-																		<input type="file" id="prd_metaimagenb" name="prd_metaimagenb" class="dropify" data-default-file="" onchange="validar(this)" data-max-width="210" accept="image/.png, .jpg, .jpeg, .gif">
+																		<input type="file" id="prd_metaimagenb" name="prd_metaimagenb" class="dropify" data-default-file="${metaimagenb}" onchange="validar(this)" data-max-width="210" accept="image/.png, .jpg, .jpeg, .gif">
 																		<label>Únicos formatos admitidos jpg, png, gif</label>
 																		<div id="error.prd_metaimagenb" class="form-error"></div>
 																	</div>
@@ -1122,19 +1215,22 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 															<div class="collapsible-body">
 																<div class="row m-0">
 																	<div class="col s12 m6 input-field">
-																		<input type="text" name="prd_precio" id="prd_precio" autocomplete="off" placeholder="" onkeyup="validar(this); ajustar_valor(this)" onchange="calcularPromocion()" value="0">
+																		<input type="text" name="prd_precio" id="prd_precio" autocomplete="off" placeholder="" onkeyup="validar(this); ajustar_valor(this)" onchange="calcularPromocion()" value="${ajustarPrecio(datos[0]['prd_precio'])}">
 																		<label>Precio<i class="requerido">*</i></label>
+																		<div class="form-error" id="error.prd_precio"></div>
 																	</div>
 																	<div class="col s12 m6">
 																		<div class="switch custom-switch mt-30">
 																			<label>
-																				<input type="checkbox" id="switch-oferta" name="prd_oferta" onchange="activarPromocion(this)">
+																				<input type="checkbox" id="switch-oferta" name="prd_oferta" onchange="activarPromocion(this, ${datos[0]['prd_porcentajepromocion']})" ${promocionActiva}>
 																				<span class="lever custom-leaver"></span>
 																				Oferta
 																			</label>
 																		</div>
 																	</div>
-																	<div class="col s12 m12 p-0" id="oferta-container"></div>
+																	<div class="col s12 m12 p-0" id="oferta-container">
+																		${contenedorPromocion}
+																	</div>
 																</div>
 															</div>
 														</li>
@@ -1168,7 +1264,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																	<div class="col s12 m4 center-align">
 																		<div class="switch custom-switch">
 																			<label>
-																				<input type="checkbox" id="prd_mostrar" name="prd_mostrar">
+																				<input type="checkbox" id="prd_mostrar" name="prd_mostrar" ${mostrarProducto}>
 																				<span class="lever custom-leaver"></span>
 																				Mostrar <br> Producto
 																			</label>
@@ -1177,7 +1273,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																	<div class="col s12 m4 center-align">
 																		<div class="switch custom-switch">
 																			<label>
-																				<input type="checkbox" id="prd_destacado" name="prd_destacado">
+																				<input type="checkbox" id="prd_destacado" name="prd_destacado" ${destacarProducto}>
 																				<span class="lever custom-leaver"></span>
 																				Destacar <br> Producto
 																			</label>
@@ -1186,7 +1282,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																	<div class="col s12 m4 center-align">
 																		<div class="switch custom-switch">
 																			<label>
-																				<input type="checkbox" id="prd_vendido" name="prd_vendido">
+																				<input type="checkbox" id="prd_vendido" name="prd_vendido" ${vendidoProducto}>
 																				<span class="lever custom-leaver"></span>
 																				¿Más Vendido?
 																			</label>
@@ -1195,9 +1291,9 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																	<div class="col s12 m4 center-align">
 																		<div class="switch custom-switch">
 																			<label>
-																				<input type="checkbox" id="prd_nuevo" name="prd_nuevo">
+																				<input type="checkbox" id="prd_nuevo" name="prd_nuevo" ${nuevoProducto}>
 																				<span class="lever custom-leaver"></span>
-																				Nuevo <br> Producto
+																				Producto <br> Nuevo
 																			</label>
 																		</div>
 																	</div>
@@ -1220,10 +1316,12 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																		<div id="error.prd_relacionado" class="form-error"></div>
 																	</div>
 																	<div class="col s12 m3">
-																		<a id="agregar-realacionado" class="btn waves-effect waves-light btnppal azulclaro"><i class="material-icons">check</i></a>
+																		<a id="agregar-relacionado" class="btn waves-effect waves-light btnppal azulclaro"><i class="material-icons">check</i></a>
 																	</div>
 																	<div class="col s12 m12">
-																		<ul class="collection" id="realacionado-collection"></ul>
+																		<ul class="collection" id="relacionado-collection">
+																			${contenedorRelacionados}
+																		</ul>
 																	</div>
 																</div>
 															</div>
@@ -1245,12 +1343,16 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							</div>
 						</form>`;
 
-						$('#pct_id').selectize({
+						const pct_ids = datos[0]['pct_ids'] != "" ? datos[0]['pct_ids'].split(",") : [];
+						const $categorias = $('#pct_id').selectize({
 							plugins: ['remove_button'],
 							create: (input) => {
 								return { value: input, text: input }
 							}
 						});
+						const control = $categorias[0].selectize;
+						control.setValue(pct_ids);
+
 						$('#prd_relacionado').selectize({
 							onChange: (value) => {
 								if(value != "") {
@@ -1259,7 +1361,9 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							}
 						});
 						$('.collapsible').collapsible();
-						$('.chips').chips();
+						$('.chips').chips({
+							data: metakeywordsObj
+						});
 						$('.dropify').dropify({
 							messages: {
 								'default': 'Selecciona o arrastra una imagen de perfil',
@@ -1269,14 +1373,24 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							},
 						});
 
+						const imagena = $('#prd_metaimagena').dropify();
+						imagena.on('dropify.afterClear', (event, element) => {
+							document.getElementById('prd_metaimagenaC').value = "";
+						})
+
+						const imagenb = $('#prd_metaimagenb').dropify();
+						imagenb.on('dropify.afterClear', (event, element) => {
+							document.getElementById('prd_metaimagenbC').value = "";
+						})
+
+						const editor = document.querySelector('#prd_descripcionlarga');
 						ClassicEditor
-							.create(document.querySelector('#prd_descripcionlarga'), basicCkeditor)
+							.create(editor, basicCkeditor)
 							.catch(error => { console.error( error ); } );
 
-						document.getElementById("agregar-realacionado").addEventListener("click", aniadirRelacionados, false);
+						document.getElementById("agregar-relacionado").addEventListener("click", aniadirRelacionados, false);
+						calcularPromocion();
 						M.updateTextFields();
-
-						
 						validacion_productos(modulo);
 					}
 		
@@ -1291,5 +1405,131 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 		$('#modal-'+modulo).modal({dismissible: false});
 		var instance = M.Modal.getInstance(modal);
 		instance.open();
+	}
+	else
+	if(seccion == "producto_variaciones")
+	{
+		const modulo = "productos";
+		const seccion_singular = "producto";
+		const seccion_legible = "Producto";
+
+		const modal = document.getElementById(`modal-${modulo}`);
+		modal.innerHTML = loaderComponent();
+
+		var xhr = new XMLHttpRequest();
+		var params 	= `idioma=${cms_idioma}&id=${id}&action=obtener_variaciones`;
+		xhr.open("POST", `inc/${modulo}.php`,true);
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.send(params);
+		xhr.onreadystatechange = function()
+		{
+			if(xhr.readyState == 4)
+			{
+				if(xhr.status == 200)
+				{
+					data = xhr.responseText.trim();
+					console.log(data);
+					if(data < 0) {
+						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
+						$(`#modal-${modulo}`).modal('close');
+					} else {
+						
+						modal.innerHTML = `
+						<form method="POST" id="${seccion_singular}_form">
+							<div id="breadcrumbs-wrapper" class="breadcrumbs-bg-image">
+								<div class="container mt-0">
+									<div class="row mb-0">
+										<div class="col s12 m11 l11">
+											<h5 class="breadcrumbs-title mt-0 mb-0"><span>Variaciones</span></h5>
+										</div>
+										<span class="modal-action modal-close"><i class="material-icons">close</i></span>
+									</div>
+								</div>
+							</div>
+							<div class="modal-content">
+								<div class="panel">
+
+								</div>
+							</div>
+							<div class="modal-footer">
+								<div class="row m-0">
+									<div class="col s12 m4 offset-m8">
+										<input type="hidden" name="action" id="action" value="">
+										<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Guardar</button>
+									</div>
+								</div>
+							</div>
+						</form>`;
+
+					}
+		
+				} else {
+					M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
+					$(`#modal-${modulo}`).modal('close');
+				}
+			}
+		}
+
+		// Configura el Modal y lo Abre 
+		$('#modal-'+modulo).modal({dismissible: false});
+		var instance = M.Modal.getInstance(modal);
+		instance.open();
+	}
+	else
+	if(seccion == "pvariaciones")
+	{
+		const modulo = "productos";
+		const seccion_singular = "producto";
+		const seccion_legible = "Producto";
+
+		const cmp = document.getElementById('pvariaciones');
+		cmp.innerHTML = loaderComponent();
+
+		var xhr = new XMLHttpRequest();
+		var params 	= `idioma=${cms_idioma}id=${id}&action=obtener_variaciones`;
+		xhr.open("POST", `inc/${modulo}.php`,true);
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.send(params);
+		xhr.onreadystatechange = function()
+		{
+			if(xhr.readyState == 4)
+			{
+				if(xhr.status == 200)
+				{
+					data = xhr.responseText.trim();
+					console.log(data);
+					if(data < 0) {
+						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
+					} else {
+						
+
+						cmp.innerHTML = `
+						<ul class="collection">
+							<li class="collection-item custom-item" id="">
+								<input type="hidden" name="prd_relacionado[]" value="">
+								<span class="custom-title">Color</span>
+								<div class="item-actions">
+									<a onclick="eliminar_relacionado(this)" idC="" class="button-item btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar"><i class="material-icons">edit</i></a>
+									<a onclick="eliminar_relacionado(this)" idC="" class="button-item btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar"><i class="material-icons">close</i></a>
+								</div>
+							</li>
+							<li class="collection-item custom-item" id="">
+								<input type="hidden" name="prd_relacionado[]" value="">
+								<span class="custom-title">Tallas</span>
+								<div class="item-actions">
+									<a onclick="eliminar_relacionado(this)" idC="" class="button-item btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar"><i class="material-icons">edit</i></a>
+									<a onclick="eliminar_relacionado(this)" idC="" class="button-item btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar"><i class="material-icons">close</i></a>
+								</div>
+							</li>
+						</ul>`;
+
+
+					}
+		
+				} else {
+					M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
+				}
+			}
+		}
 	}
 }
