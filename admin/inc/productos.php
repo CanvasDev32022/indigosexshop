@@ -518,14 +518,23 @@
 	}
 	elseif($_POST['action'] == "obtener_variaciones")
 	{
-		$prepare = "SELECT var_id, var_nombre FROM variaciones WHERE ?";
+		$prepare = "SELECT var_id, var_nombre FROM variaciones WHERE ? ORDER BY var_nombre ASC";
 		$params = [1];
 		$types = ['i'];
 		$varS = $toolSQL->selectSQL($prepare, $types, $params);
 		if($varS < 0)
 			echo -1;
 		else
-			echo json_encode($varS);
+		{
+			$prepare = "SELECT vrd_id, var_id, vrd_nombre, vrd_color FROM variaciones_detalles WHERE vrd_borrado = ? ORDER BY var_id ASC";
+			$params = [0];
+			$types = ['i'];
+			$vrdS = $toolSQL->selectSQL($prepare, $types, $params);
+			if($vrdS < 0)
+				echo -2;
+			else
+				echo json_encode($varS)."::".json_encode($vrdS);
+		}
 	}
 
 ?>
