@@ -4,6 +4,7 @@ let cms_idioma = "";
 let cms_datos = [];
 let rol_global = 0;
 let validaciones_global = [];
+let dataGlobal = [];
 
 // TODO: Tipos de variación
 const variaciones_tipos = [

@@ -1031,3 +1031,51 @@ const eliminar_relacionado = (cmp) => {
 const removeAccents = (str) => {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 } 
+
+// TODO: 
+const cargar_vdetales = (id, nombre) => {
+
+	let optionDetalle = "";
+	for(const detalle of dataGlobal) {
+		if(detalle['var_id'] == id) {
+			optionDetalle = optionDetalle + `<option value="${detalle['vrd_id']}">${detalle['vrd_nombre']}</option>`;
+		}
+	}
+
+	const cmp = document.getElementById('variaciones-container');
+	let contenedor = "";
+	contenedor = contenedor + `
+	<li class="active">
+		<div class="collapsible-header">${nombre}</div>
+		<div class="collapsible-body">
+			<div class="row">
+				<div class="col s12 m6">
+					<label></label>
+					<select name="" id="vrd_id-${id}">
+						<option value="" selected disabled>Seleccione una opción</option>
+						${optionDetalle}
+					</select>
+				</div>
+			</div>
+			<div class="chip custom-chip truncate">
+				Jane Doe4
+				<i class="close material-icons">close</i>
+			</div>
+		</div>
+	</li>`;
+
+	$(cmp).append(contenedor);
+	const collapsible = $('.collapsible').collapsible();
+	const instances = M.Collapsible.init(collapsible, {accordion: false});
+	$(`#vrd_id-${id}`).selectize({
+		onChange: (value) => {
+
+			if(value != "") {
+				console.log({ value });
+			}
+
+		}
+	});
+	$('.chips').chips();
+
+}

@@ -2579,3 +2579,12 @@ strong{font-weight:bold}
 .collection li:nth-child(even){background-color: #fbfcfe}
 
 .collection li:hover { background: var(--sup-2); }
+
+.chip.custom-chip {
+	background-color: var(--sup-3) !important;
+	color: var(--prin-1);
+}
+
+.chip.custom-chip img {
+
+}

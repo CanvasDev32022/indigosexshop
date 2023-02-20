@@ -1242,7 +1242,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 															<div class="collapsible-header">Categorias</div>
 															<div class="collapsible-body">
 																<div class="row m-0">
-																	<div class="col s12 m12">
+																	<div class="col s12 m12 select">
 																		<label>Categorias<i class="requerido">*</i></label>
 																		<select name="pct_id[]" id="pct_id" multiple>
 																			<option value="" selected disabled>Seleccióne una opción</option>
@@ -1497,33 +1497,62 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 				if(xhr.status == 200)
 				{
 					data = xhr.responseText.trim();
-					console.log(data);
+					// console.log(data);
 					if(data < 0) {
 						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
 					} else {
 						
+						const tmp = data.split("::");
+						const variaciones = JSON.parse(tmp[0]);
+						const detalles = JSON.parse(tmp[1]);
+						dataGlobal = detalles;
+
+						let optionVariaciones = [];
+						for(const variacion of variaciones) {
+							optionVariaciones = optionVariaciones + `<option value="${variacion['var_id']}">${variacion['var_nombre']}</option>`;
+						}
 
 						cmp.innerHTML = `
-						<ul class="collection">
-							<li class="collection-item custom-item" id="">
-								<input type="hidden" name="prd_relacionado[]" value="">
-								<span class="custom-title">Color</span>
-								<div class="item-actions">
-									<a onclick="eliminar_relacionado(this)" idC="" class="button-item btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar"><i class="material-icons">edit</i></a>
-									<a onclick="eliminar_relacionado(this)" idC="" class="button-item btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar"><i class="material-icons">close</i></a>
+						<form action="">
+							<div class="row">
+								<div class="col s12 m8 select">
+									<label>Variaciones</label>
+									<select name="var_id[]" id="var_id">
+										<option value="" selected disabled>Seleccione una opción</option>
+										${optionVariaciones}
+									</select>
 								</div>
-							</li>
-							<li class="collection-item custom-item" id="">
-								<input type="hidden" name="prd_relacionado[]" value="">
-								<span class="custom-title">Tallas</span>
-								<div class="item-actions">
-									<a onclick="eliminar_relacionado(this)" idC="" class="button-item btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar"><i class="material-icons">edit</i></a>
-									<a onclick="eliminar_relacionado(this)" idC="" class="button-item btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar"><i class="material-icons">close</i></a>
+								<div class="col s12 m4 mt-30">
+									<div class="switch custom-switch">
+										<label>
+											<input type="checkbox" id="prd_destacado" name="prd_destacado">
+											<span class="lever custom-leaver"></span>
+											Inventario por variacion
+										</label>
+									</div>
 								</div>
-							</li>
-						</ul>`;
+								<div class="col s12 m12 mt-10">
+									<ul class="collapsible custom-collapsible" id="variaciones-container">
+										
+									</ul>
+								</div>
+							</div>
+						</form>`;
 
+						const $variaciones = $('#var_id').selectize({
+							onChange: (value) => {
 
+								if(value != "") {
+									const control = $variaciones[0].selectize;
+									const opciones = control.options;
+									const nombre = "";
+									console.log(nombre);
+									cargar_vdetales(value, nombre);
+									control.removeOption(value);
+								}
+
+							}
+						});
 					}
 		
 				} else {
