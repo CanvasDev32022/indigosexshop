@@ -305,6 +305,44 @@ const validacion_productos = (seccion) => {
 	});
 }
 
+// TODO: VALIDACION AGREGAR VARIANTES PRODUCTO
+const validacion_variantes = (seccion) => {
+
+	const seccion_legible = "Variante";
+	const seccion_singular = "variante";
+
+	const formulario = document.getElementById(`${seccion_singular}_form`);
+	formulario.addEventListener("submit", (e) => {
+		e.preventDefault();
+
+		const boton = document.getElementById(`action_${seccion_singular}`);
+		boton.setAttribute("disabled", "disabled");
+
+		const validaciones = [
+			['var_id', '', 'required'],
+			['vrd_id', '', 'required']
+		];
+		const respuesta = validar_formulario(validaciones, false);
+		if(respuesta) {
+			
+			const data = new FormData(formulario);
+			const var_id = data.get("var_id");
+			let vrd_id = data.getAll("vrd_id[]");
+			vrd_id = vrd_id.join(",");
+			console.log({
+				var_id, 
+				vrd_id
+			});
+
+
+			boton.removeAttribute("disabled");
+
+		} else {
+			boton.removeAttribute("disabled");
+		}
+	});
+}
+
 // TODO: VALIDACIONE ARCHIVOS (IMG)
 const validacion_documento = (item, tamanio) => {
 	

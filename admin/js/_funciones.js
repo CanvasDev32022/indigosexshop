@@ -1033,49 +1033,81 @@ const removeAccents = (str) => {
 } 
 
 // TODO: 
-const cargar_vdetales = (id, nombre) => {
+const agregarVariantes = () => {
 
-	let optionDetalle = "";
-	for(const detalle of dataGlobal) {
-		if(detalle['var_id'] == id) {
-			optionDetalle = optionDetalle + `<option value="${detalle['vrd_id']}">${detalle['vrd_nombre']}</option>`;
-		}
+	const modulo = "variantes";
+	const seccion_legible = "Variante";
+	const seccion_singular = "variante";
+
+	const modal = document.getElementById(`modal-archivos`);
+	modal.innerHTML = loaderComponent();
+
+	let optionVariacion = "";
+	for(varaicion of validaciones_global) {
+		optionVariacion = optionVariacion + `<option value="${varaicion['var_id']}">${varaicion['var_nombre']}</option>`;
 	}
 
-	const cmp = document.getElementById('variaciones-container');
-	let contenedor = "";
-	contenedor = contenedor + `
-	<li class="active">
-		<div class="collapsible-header">${nombre}</div>
-		<div class="collapsible-body">
-			<div class="row">
-				<div class="col s12 m6">
-					<label></label>
-					<select name="" id="vrd_id-${id}">
-						<option value="" selected disabled>Seleccione una opción</option>
-						${optionDetalle}
-					</select>
+	modal.innerHTML = `
+	<form method="POST" id="${seccion_singular}_form">
+		<div id="breadcrumbs-wrapper" class="breadcrumbs-bg-image">
+			<div class="container mt-0">
+				<div class="row mb-0">
+					<div class="col s12 m11 l11">
+						<h5 class="breadcrumbs-title mt-0 mb-0"><span>Agregar ${seccion_legible}</span></h5>
+					</div>
+					<span class="modal-action modal-close"><i class="material-icons">close</i></span>
 				</div>
 			</div>
-			<div class="chip custom-chip truncate">
-				Jane Doe4
-				<i class="close material-icons">close</i>
+		</div>
+		<div class="modal-content">
+			<div class="panel">
+				<div class="row">
+					<div class="col s12 m8 select">
+						<label>Variaciones</label>
+						<select name="var_id" id="var_id">
+							<option value="" selected disabled>Seleccione una opción</option>
+							${optionVariacion}
+						</select>
+						<div class="form-error" id="error.var_id"></div>
+					</div>
+					<div class="col s12 m12 select">
+						<label>Variaciones</label>
+						<select name="vrd_id[]" id="vrd_id" multiple>
+							<option value="" selected disabled>Seleccione una opción</option>
+							
+						</select>
+						<div class="form-error" id="error.vrd_id"></div>
+					</div>
+				</div>
 			</div>
 		</div>
-	</li>`;
+		<div class="modal-footer">
+			<div class="row m-0">
+				<div class="col s12 m4 offset-m8">
+					<input type="hidden" name="action" id="action" value="crear">
+					<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Añadir</button>
+				</div>
+			</div>
+		</div>
+	</form>`;
 
-	$(cmp).append(contenedor);
-	const collapsible = $('.collapsible').collapsible();
-	const instances = M.Collapsible.init(collapsible, {accordion: false});
-	$(`#vrd_id-${id}`).selectize({
+	const $detalles = $('#vrd_id').selectize({
+		plugins: ['remove_button']
+	});
+
+	const $variaciones = $('#var_id').selectize({
 		onChange: (value) => {
-
 			if(value != "") {
-				console.log({ value });
+				cargar_select("vdetalles", 0, $detalles, value);
 			}
-
 		}
 	});
-	$('.chips').chips();
 
+	M.updateTextFields();
+	validacion_variantes(modulo);
+
+	// Configura el Modal y lo Abre 
+	$(`#modal-archivos`).modal({dismissible: false});
+	var instance = M.Modal.getInstance(modal);
+	instance.open();
 }
