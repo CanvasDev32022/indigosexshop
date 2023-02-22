@@ -1505,54 +1505,36 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 						const tmp = data.split("::");
 						const variaciones = JSON.parse(tmp[0]);
 						const detalles = JSON.parse(tmp[1]);
+						validaciones_global = variaciones;
 						dataGlobal = detalles;
-
-						let optionVariaciones = [];
-						for(const variacion of variaciones) {
-							optionVariaciones = optionVariaciones + `<option value="${variacion['var_id']}">${variacion['var_nombre']}</option>`;
-						}
 
 						cmp.innerHTML = `
 						<form action="">
+							<input type="" name="var_ids" id="var_ids" value="">
+							<input type="" name="vrd_ids" id="vrd_ids" value="">
 							<div class="row">
-								<div class="col s12 m8 select">
-									<label>Variaciones</label>
-									<select name="var_id[]" id="var_id">
-										<option value="" selected disabled>Seleccione una opción</option>
-										${optionVariaciones}
-									</select>
+								<div class="col s12 m2">
+									<input type="hidden" name="action" id="action" value="">
+									<a onclick="agregarVariantes()" class="btn waves-effect waves-light azulclaro"><i class="material-icons right">add</i>Agregar</a>
 								</div>
-								<div class="col s12 m4 mt-30">
+								<div class="col s12 m4  offset-m4">
 									<div class="switch custom-switch">
 										<label>
-											<input type="checkbox" id="prd_destacado" name="prd_destacado">
+											<input type="checkbox" id="prd_destacado" name="prd_destacado" disabled>
 											<span class="lever custom-leaver"></span>
 											Inventario por variacion
 										</label>
 									</div>
 								</div>
-								<div class="col s12 m12 mt-10">
-									<ul class="collapsible custom-collapsible" id="variaciones-container">
+								<div class="col s12 m12">
+									<ul class="collection " id="variaciones-container">
 										
 									</ul>
 								</div>
 							</div>
 						</form>`;
 
-						const $variaciones = $('#var_id').selectize({
-							onChange: (value) => {
-
-								if(value != "") {
-									const control = $variaciones[0].selectize;
-									const opciones = control.options;
-									const nombre = "";
-									console.log(nombre);
-									cargar_vdetales(value, nombre);
-									control.removeOption(value);
-								}
-
-							}
-						});
+						
 					}
 		
 				} else {
