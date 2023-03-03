@@ -305,45 +305,7 @@ const validacion_productos = (seccion) => {
 	});
 }
 
-// TODO: VALIDACION AGREGAR VARIANTES PRODUCTO
-const validacion_variantes = (seccion) => {
-
-	const seccion_legible = "Variante";
-	const seccion_singular = "variante";
-
-	const formulario = document.getElementById(`${seccion_singular}_form`);
-	formulario.addEventListener("submit", (e) => {
-		e.preventDefault();
-
-		const boton = document.getElementById(`action_${seccion_singular}`);
-		boton.setAttribute("disabled", "disabled");
-
-		const validaciones = [
-			['var_id', '', 'required'],
-			['vrd_id', '', 'required']
-		];
-		const respuesta = validar_formulario(validaciones, false);
-		if(respuesta) {
-			
-			const data = new FormData(formulario);
-			const var_id = data.get("var_id");
-			let vrd_id = data.getAll("vrd_id[]");
-			vrd_id = vrd_id.join(",");
-			console.log({
-				var_id, 
-				vrd_id
-			});
-
-
-			boton.removeAttribute("disabled");
-
-		} else {
-			boton.removeAttribute("disabled");
-		}
-	});
-}
-
-// TODO: VALIDACIONE ARCHIVOS (IMG)
+// TODO: VALIDACION ARCHIVOS (IMG)
 const validacion_documento = (item, tamanio) => {
 	
 	const seccion_singular = "archivo";
@@ -412,6 +374,69 @@ const validacion_documento = (item, tamanio) => {
 	});
 }
 
+// TODO: VALIDACION MODULO VARIACIONES DE PRODUCTO
+const validacion_pvariaciones = (seccion, rol, producto) => {
+
+	const seccion_singular = "pvariacion";
+	const seccion_legible = "Variacion";
+
+	const formulario = document.querySelector(`#${seccion_singular}_form`);
+	formulario.addEventListener("submit", (e) => {
+		e.preventDefault();
+
+		const boton = document.querySelector(`#action_${seccion_singular}`);
+		boton.setAttribute("disabled", "disabled");
+
+		const validaciones = [
+			['var_id', '', 'required'],
+			['vrd_id', '', 'required']
+		];		
+		const respuesta = validar_formulario(validaciones, false);
+		if(respuesta) {
+
+			const id = document.getElementById('prv_id') != null ? document.getElementById('prv_id').value : 0;
+			const xhr = new XMLHttpRequest();
+			let data = new FormData(formulario);
+			xhr.addEventListener("error", errorHandler, false);
+			xhr.addEventListener("abort", abortHandler, false);
+			xhr.open('POST', `inc/${seccion}.php`,true);
+			xhr.send(data);
+			xhr.onreadystatechange = function()
+			{
+				if(xhr.readyState == 4)
+				{
+					if(xhr.status == 200)
+					{
+						data = xhr.responseText.trim();
+						console.log(data);
+						if(data < 0) {
+							M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
+						} else {
+
+							if(id == 0)
+								M.toast({html: `La ${seccion_legible} se ha creado correctamente.`, classes: 'toastdone'});
+							else
+								M.toast({html: `La ${seccion_legible} se ha editado correctamente.`, classes: 'toastdone'});
+
+							$(`#modal-archivos`).modal('close');
+							var variables = obtener_variables();
+							formulario.innerHTML = "";
+							plantillas(seccion, '', rol,  variables[0],variables[1], producto);
+						}
+			
+					} else {
+						M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
+					}
+					boton.removeAttribute("disabled");
+				}
+			}
+				
+		} else {
+			boton.removeAttribute("disabled");
+		}
+	});
+}
+
 // TODO: funciones de error par FORM DATA
 function errorHandler(event) {
 	app.toast.show({text: 'Ha ocurrido un error. Intente de nuevo.',closeTimeout: 2000, cssClass: 'toasterror'});
@@ -437,7 +462,11 @@ const validar = (cmp) => {
 		if(clase[clase.length -1] == "input-error")
 		{
 			document.getElementById(id).classList.remove("input-error");
-			document.getElementById('error.'+id).innerHTML = "";
+			if(document.getElementById('error.'+id) == undefined) {
+				document.querySelector(`[data-field="${id}"]`).innerHTML = "";
+			} else {
+				document.getElementById('error.'+id).innerHTML = "";
+			}
 		}
 	}
 	else
@@ -446,7 +475,11 @@ const validar = (cmp) => {
 		if(clase[clase.length -1] == "input-error")
 		{
 			document.getElementById(id).classList.remove("input-error");
-			document.getElementById('error.'+id).innerHTML = "";
+			if(document.getElementById('error.'+id) == undefined) {
+				document.querySelector(`[data-field="${id}"]`).innerHTML = "";
+			} else {
+				document.getElementById('error.'+id).innerHTML = "";
+			}
 		}
 	}
 	if(tipo == "TEXTAREA")
@@ -454,7 +487,11 @@ const validar = (cmp) => {
 		if(clase[clase.length -1] == "input-error")
 		{
 			document.getElementById(id).classList.remove("input-error");
-			document.getElementById('error.'+id).innerHTML = "";
+			if(document.getElementById('error.'+id) == undefined) {
+				document.querySelector(`[data-field="${id}"]`).innerHTML = "";
+			} else {
+				document.getElementById('error.'+id).innerHTML = "";
+			}
 		}
 	}
 }
@@ -638,7 +675,12 @@ const validar_formulario = (validaciones, toast = false) => {
 	{
 		for (var i = 0; i < errores.length; i++) {
 			document.getElementById(errores[i][0]).classList.add("input-error");
-			document.getElementById('error.'+errores[i][0]).innerHTML = errores[i][1];
+			
+			if(document.getElementById('error.'+errores[i][0]) == undefined) {
+				document.querySelector(`[data-field="${errores[i][0]}"]`).innerHTML = errores[i][1];
+			} else {
+				document.getElementById('error.'+errores[i][0]).innerHTML = errores[i][1];
+			}
 		}		
 
 		enviar = false;

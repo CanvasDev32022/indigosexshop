@@ -182,6 +182,7 @@ const eliminar_registro = (id, seccion, pagina, busqueda, action='lista', datos)
 
 /*TODO: FUNCION DE ACCESO */
 const validar_acceso = (indice, rol) => {
+
 	const boton = indice;
 	const accesos = accesos_botones[boton].split(",");
 
@@ -663,195 +664,6 @@ const generar_slug = (cadena)  => {
 	return slug;
 }
 
-// TODO: Eliminar detalle de proyecto
-const eliminar_detalle = (cmp, seccion) => {
-	
-	const padre = document.getElementById(seccion);
-	const id = cmp.getAttribute("idC");
-	const hijo = document.getElementById(id);
-
-	const tmpE = padre.querySelectorAll("tr");
-	const elements = padre.querySelectorAll("tr")[tmpE.length - 1];
-
-	if(elements.id == id) {
-		M.toast({html: 'No se puede remover, se debe mantener al menos (1) elementos vacios.', classes: 'toastwarning'});
-	} else {
-		
-		const hijo_elements = hijo.querySelectorAll("input");
-		for (var i = 0; i < validaciones_dproyecto.length; i++) {
-
-			for (var j = 0; j < hijo_elements.length; j++) {
-
-				const hijo_id = hijo_elements[j].id;
-
-				if(validaciones_dproyecto[i][0] == hijo_id) {
-					validaciones_dproyecto.splice(i, 1);
-				}
-			}
-		}
-		padre.removeChild(hijo)
-	}
-}
-
-// TODO: Verificar los detalles existentes
-const verificar_detalles = (cmp, seccion) => {
-
-	let valor = cmp.value;
-	let id = cmp.id.split("-")[0];
-	let indice = cmp.id.split("-")[1];
-	// // TODO: Verificamos que el item no esté vacío
-	if(valor != "")
-	{
-		// TODO: Generamos un ID válido
-		do{
-			indice++;
-		}
-		while(document.getElementById(`${id}-${indice}`) != null);
-		if(document.getElementById(`${id}-${indice - 1}`).value != "") {
-			cargar_detalles_proyecto(indice, [], seccion);
-		}
-	}
-}
-
-// TODO: Cargar estdisticas index
-const cargar_estadisticas = () => {
-
-	var xhr = new XMLHttpRequest();
-	var params 	= "action=estadisticas";
-	xhr.open("POST", "inc/index.php",true);
-	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-	xhr.send(params);
-	xhr.onreadystatechange = function()
-	{
-		if(xhr.readyState == 4)
-		{
-			if(xhr.status == 200)
-			{
-				res = xhr.responseText.trim();
-				// console.log(res);
-				if(res < 0)
-					M.toast({html: 'Ha ocurrido un error. Por favor, intente de nuevo. Código: '+res, classes: 'toasterror'});
-				else
-				{
-					const tmp = res.split("::");
-					const whatsapp = JSON.parse(tmp[0]);
-					const llamadas = JSON.parse(tmp[1]);
-					const contactos = JSON.parse(tmp[2]);
-
-
-					let lineChart = "";
-					let mayor = 0;
-					const labels = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
-					const WhatsApp = [];
-					const Llamadas = [];
-					const Contacto = [];
-					labels.forEach((mes, i) => {
-
-						const id = i + 1;
-
-						whatsapp.forEach((whats, w) => {
-
-							if(whats['whatsapp'] > mayor)
-								mayor = whats['whatsapp'];
-
-							if(id == whats['mes']) {
-								WhatsApp.push(whats['whatsapp']);
-							} else {
-								WhatsApp.push(0);
-							}
-
-						});
-
-						llamadas.forEach((llamada, l) => {
-
-							if(llamada['llamada'] > mayor)
-								mayor = llamada['llamada'];
-
-							if(id == llamada['mes']) {
-								Llamadas.push(llamada['llamada']);
-							} else {
-								Llamadas.push(0);
-							}
-
-						});
-
-						contactos.forEach((contacto, c) => {
-
-							if(contacto['contacto'] > mayor)
-								mayor = contacto['contacto'];
-
-							if(id == contacto['mes']) {
-								Contacto.push(contacto['contacto']);
-							} else {
-								Contacto.push(0);
-							}
-
-						});
-
-					});
-
-
-					const data = {
-						labels: labels,
-						datasets: [
-							{
-								label: 'Llamadas',
-								data: Llamadas,
-								borderColor: '#003359',
-								backgroundColor: '#003359'
-							},
-							{
-								label: 'WhatsApp',
-								data: WhatsApp,
-								borderColor: '#0cc243',
-								backgroundColor: '#0cc243'
-							},
-							{
-								label: 'Formulario de Contacto',
-								data: Contacto,
-								borderColor: '#ff6223',
-								backgroundColor: '#ff6223'
-							}
-						]
-					};
-
-					const config = {
-						type: 'line',
-						data: data,
-						options: {
-							respnsive: true,
-							maintainAspectRatio: false,
-							plugins: {
-								legend: {
-									position: 'top',
-								},
-								title: {
-									display: true,
-									text: "Estadisticas"
-								}
-							},
-							scales: 
-							{
-								y: {
-									beginAtZero: true,
-									// the data maximum used for determining the ticks is Math.max(dataMax, suggestedMax)
-									suggestedMax: mayor + Math.ceil(mayor * 20 / 100),
-									suggestedMin: 0,
-								}
-							}
-						}
-					}
-					const ctx = document.getElementById('line-chart').getContext('2d');
-					lineChart = new Chart(ctx, config);
-				}
-			} else {
-				M.toast({html: "Ha ocurrido un error, verifique su conexión a Internet", classes: 'toasterror'});
-			}
-		}
-	}
-}
-
 // TODO: funcion para generar password encrypt
 function generarContraseña(tamaño){
 	var slug ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -1032,82 +844,156 @@ const removeAccents = (str) => {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 } 
 
-// TODO: 
-const agregarVariantes = () => {
+// TODO: Agregar galeria a variantes
+const cargar_variaciones = (cmp, activo=true) => {
 
-	const modulo = "variantes";
-	const seccion_legible = "Variante";
-	const seccion_singular = "variante";
+	const control = cmp[0].selectize;
+	const items = control.items;
+	
+	if(items == "") {
 
-	const modal = document.getElementById(`modal-archivos`);
-	modal.innerHTML = loaderComponent();
+		M.toast({html: `Debe seleccionar al menos una opci&oacute;n.`, classes: 'toastwarning'});
+		enviar = false;
 
-	let optionVariacion = "";
-	for(varaicion of validaciones_global) {
-		optionVariacion = optionVariacion + `<option value="${varaicion['var_id']}">${varaicion['var_nombre']}</option>`;
+	} else {
+		
+		const contenedor = document.querySelector('#galeria-container');
+		if(activo) {
+
+			let contenido = `<ul class="collapsible custom-collapsible" id="galeria-list">`;
+			const options = control.options;
+
+			items.forEach((item, i) => {
+				
+				const activo = i == 0 ? "active" : "";
+				let nombre = "";
+				for(keyO of Object.keys(options)) {
+					
+					if(parseInt(item) == parseInt(options[keyO].value))
+						nombre = options[keyO].text;
+				};
+
+				contenido = contenido + `
+				<li class="${activo}" id="vitem-${item}">
+					<div class="collapsible-header">${nombre}<i class="requerido">*</i></div>
+					<div class="collapsible-body">
+						<input type="" name="archivos_input-${item}" id="archivos_input-${item}" value="">
+						<div class="row m-0">
+							<div class="col s12 m12">
+								<div class="archivos-container" id="archivosC-${item}">
+									<a class="archivo" onclick="cargar_archivos(${item}, 'imagena')">
+										<div class="archivo-container">
+											<img src="img/tipos/mas.png" alt="" loading="lazy">
+										</div>
+										<div class="archivo-footer">Cargar Imágenes</div>
+									</a>
+								</div>
+							</div>
+							<div class="col s12 m12">
+								<div class="form-error" id="error.archivos_input-${item}"></div>
+							</div>
+						</div>
+					</div>
+				</li>`;
+			});
+
+			contenido = contenido + `</ul>`;
+			contenedor.innerHTML = contenido;
+			$('.collapsible').collapsible();
+
+			enviar = true;
+		} else {
+
+			contenedor.innerHTML = "";
+			enviar = false;
+		}
 	}
 
-	modal.innerHTML = `
-	<form method="POST" id="${seccion_singular}_form">
-		<div id="breadcrumbs-wrapper" class="breadcrumbs-bg-image">
-			<div class="container mt-0">
-				<div class="row mb-0">
-					<div class="col s12 m11 l11">
-						<h5 class="breadcrumbs-title mt-0 mb-0"><span>Agregar ${seccion_legible}</span></h5>
-					</div>
-					<span class="modal-action modal-close"><i class="material-icons">close</i></span>
-				</div>
-			</div>
-		</div>
-		<div class="modal-content">
-			<div class="panel">
-				<div class="row">
-					<div class="col s12 m8 select">
-						<label>Variaciones</label>
-						<select name="var_id" id="var_id">
-							<option value="" selected disabled>Seleccione una opción</option>
-							${optionVariacion}
-						</select>
-						<div class="form-error" id="error.var_id"></div>
-					</div>
-					<div class="col s12 m12 select">
-						<label>Variaciones</label>
-						<select name="vrd_id[]" id="vrd_id" multiple>
-							<option value="" selected disabled>Seleccione una opción</option>
-							
-						</select>
-						<div class="form-error" id="error.vrd_id"></div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="modal-footer">
+	return enviar;
+}
+
+// TODO: Agregar opcion a variantes
+const agregar_variaciones = (value, cmp) => {
+
+	const item = value.pop();
+	let contenido = "";
+	let nombre = "";
+	const control = cmp[0].selectize;
+	const options = control.options;
+	for(keyO of Object.keys(options)) {
+		
+		if(parseInt(item) == parseInt(options[keyO].value))
+			nombre = options[keyO].text;
+	};
+
+	contenido = contenido + `
+	<li class="" id="vitem-${item}">
+		<div class="collapsible-header">${nombre}<i class="requerido">*</i></div>
+		<div class="collapsible-body">
+			<input type="" name="archivos_input-${item}" id="archivos_input-${item}" value="">
 			<div class="row m-0">
-				<div class="col s12 m4 offset-m8">
-					<input type="hidden" name="action" id="action" value="crear">
-					<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Añadir</button>
+				<div class="col s12 m12">
+					<div class="archivos-container" id="archivosC-${item}">
+						<a class="archivo" onclick="cargar_archivos(${item}, 'imagena')">
+							<div class="archivo-container">
+								<img src="img/tipos/mas.png" alt="" loading="lazy">
+							</div>
+							<div class="archivo-footer">Cargar Imágenes</div>
+						</a>
+					</div>
+				</div>
+				<div class="col s12 m12">
+					<div class="form-error" id="error.archivos_input-${item}"></div>
 				</div>
 			</div>
 		</div>
-	</form>`;
+	</li>`;
 
-	const $detalles = $('#vrd_id').selectize({
-		plugins: ['remove_button']
-	});
+	return contenido;
+}
 
-	const $variaciones = $('#var_id').selectize({
-		onChange: (value) => {
-			if(value != "") {
-				cargar_select("vdetalles", 0, $detalles, value);
+const eliminar_variacion = (id, seccion, rol, producto) => {
+
+	Swal.fire({
+		title: "¿Estás seguro de eliminar el registro?",
+		text:  "Una vez eliminado no podrá ser recuperado",
+		icon: "error",
+		showCancelButton: true,
+		confirmButtonColor: '#19a0c9',
+		cancelButtonColor: '#003359',
+		confirmButtonText: "Confirmar",
+		cancelButtonText: "Cancelar",
+		reverseButtons: true
+	})
+
+		.then((result) => {
+			if (result.isConfirmed)
+		{
+			var xhr_usr = new XMLHttpRequest();
+			var params = "id="+id+"&action=eliminar";
+			xhr_usr.open("POST", "inc/"+seccion+".php",true);
+			xhr_usr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			xhr_usr.send(params);
+			xhr_usr.onreadystatechange = function()
+			{
+				if(xhr_usr.readyState == 4)
+				{
+					if(xhr_usr.status == 200)
+					{
+						var data = xhr_usr.responseText.trim();
+						console.log(data);
+						if(data < 0)
+							M.toast({html: 'Ha ocurrido un error. Por favor, intente de nuevo. Código: '+data, classes: 'toasterror'});
+						else
+						{
+							M.toast({html: "El registro ha sido eliminado correctamente.", classes: 'toastdone'});
+							plantillas('pvariaciones', '', rol, '', '', producto);
+						}
+					}
+					else
+						M.toast({html: "Ha ocurrido un error, verifique su conexión a Internet", classes: 'toasterror'});
+				}
 			}
-		}
+		} 
 	});
-
-	M.updateTextFields();
-	validacion_variantes(modulo);
-
-	// Configura el Modal y lo Abre 
-	$(`#modal-archivos`).modal({dismissible: false});
-	var instance = M.Modal.getInstance(modal);
-	instance.open();
 }

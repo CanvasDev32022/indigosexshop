@@ -2276,9 +2276,17 @@ ul.collapsible.custom-collapsible {
 
 ul.collapsible.custom-collapsible .collapsible-header { color: var(--menuhover); font-weight: bold; font-size: 1rem; }
 
-ul.collapsible.custom-collapsible, ul.collapsible.custom-collapsible .collapsible-header, ul.collapsible.custom-collapsible .collapsible-body {
+ul.collapsible.custom-collapsible, 
+ul.collapsible.custom-collapsible 
+.collapsible-header, 
+ul.collapsible.custom-collapsible .collapsible-body {
 	border-radius: 15px !important;
 	background-color: #ffffff;
+}
+ul.collapsible.custom-collapsible.disabled .collapsible-header,
+ul.collapsible.custom-collapsible.disabled .collapsible-body {
+	pointer-events: none;
+	opacity: .6;
 }
 
 .collapsible-header.collapsible-head {
@@ -2580,11 +2588,45 @@ strong{font-weight:bold}
 
 .collection li:hover { background: var(--sup-2); }
 
-.chip.custom-chip {
-	background-color: var(--sup-3) !important;
+.collection-item.custom-collection {
+	display: flex;
+	font-weight: bold;
 	color: var(--prin-1);
 }
+.collection-item.custom-collection .collection-head {
+	width: calc(20% - 10px);
+	display: inline-flex;
+	align-items: center;
+}
+.collection-item.custom-collection .collection-body {
+	width: 70%;
+	display: inline-flex;
+}
+.collection-item.custom-collection .collection-actions {
+	width: calc(10% - 10px);
+}
 
-.chip.custom-chip img {
+.chip.custom-chip {
+	display: inline-flex;
+	align-items: center;
+    height: 32px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 32px;
+    padding: 0 12px;
+    border-radius: 16px;
+    margin-bottom: 5px;
+    margin-right: 5px;
+    background-color: transparent !important;
+    color: var(--prin-1);
+    font-size: 1rem;
+    font-weight: bold;
+}
 
+.chip.custom-chip span {
+	float: left;
+    margin: 0 8px 0 -12px;
+    height: 22px;
+    width: 22px;
+    border-radius: 50%;
 }
