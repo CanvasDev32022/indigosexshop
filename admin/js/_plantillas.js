@@ -1,6 +1,6 @@
 const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => {
 	
-	validaciones_global = [];
+	validacionesGlobal = [];
 
 	// TODO: MODULO USUARIOS
 	if(seccion == "usuarios")
@@ -1406,87 +1406,18 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 		var instance = M.Modal.getInstance(modal);
 		instance.open();
 	}
-	else
-	if(seccion == "producto_variaciones")
-	{
-		const modulo = "productos";
-		const seccion_singular = "producto";
-		const seccion_legible = "Producto";
-
-		const modal = document.getElementById(`modal-${modulo}`);
-		modal.innerHTML = loaderComponent();
-
-		var xhr = new XMLHttpRequest();
-		var params 	= `idioma=${cms_idioma}&id=${id}&action=obtener_variaciones`;
-		xhr.open("POST", `inc/${modulo}.php`,true);
-		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-		xhr.send(params);
-		xhr.onreadystatechange = function()
-		{
-			if(xhr.readyState == 4)
-			{
-				if(xhr.status == 200)
-				{
-					data = xhr.responseText.trim();
-					console.log(data);
-					if(data < 0) {
-						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
-						$(`#modal-${modulo}`).modal('close');
-					} else {
-						
-						modal.innerHTML = `
-						<form method="POST" id="${seccion_singular}_form">
-							<div id="breadcrumbs-wrapper" class="breadcrumbs-bg-image">
-								<div class="container mt-0">
-									<div class="row mb-0">
-										<div class="col s12 m11 l11">
-											<h5 class="breadcrumbs-title mt-0 mb-0"><span>Variaciones</span></h5>
-										</div>
-										<span class="modal-action modal-close"><i class="material-icons">close</i></span>
-									</div>
-								</div>
-							</div>
-							<div class="modal-content">
-								<div class="panel">
-
-								</div>
-							</div>
-							<div class="modal-footer">
-								<div class="row m-0">
-									<div class="col s12 m4 offset-m8">
-										<input type="hidden" name="action" id="action" value="">
-										<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Guardar</button>
-									</div>
-								</div>
-							</div>
-						</form>`;
-
-					}
-		
-				} else {
-					M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
-					$(`#modal-${modulo}`).modal('close');
-				}
-			}
-		}
-
-		// Configura el Modal y lo Abre 
-		$('#modal-'+modulo).modal({dismissible: false});
-		var instance = M.Modal.getInstance(modal);
-		instance.open();
-	}
+	// TODO: MODULO VARIACIONES DE PRODUCTOS
 	else
 	if(seccion == "pvariaciones")
-	{
-		const modulo = "productos";
-		const seccion_singular = "producto";
-		const seccion_legible = "Producto";
+	{	
+		const modulo = "pvariaciones";
+		const seccion_singular = "pvariacion";
+		const seccion_legible = "Variacion";
 
-		const cmp = document.getElementById('pvariaciones');
-		cmp.innerHTML = loaderComponent();
-
+		const prd_id = getUrlParam('c');
+		const cmp = document.querySelector(`#${modulo}`);
 		var xhr = new XMLHttpRequest();
-		var params 	= `idioma=${cms_idioma}id=${id}&action=obtener_variaciones`;
+		var params 	= `idioma=${cms_idioma}&id=${id}&action=lista`;
 		xhr.open("POST", `inc/${modulo}.php`,true);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		xhr.send(params);
@@ -1503,38 +1434,77 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 					} else {
 						
 						const tmp = data.split("::");
-						const variaciones = JSON.parse(tmp[0]);
+						const datos = JSON.parse(tmp[0]);
 						const detalles = JSON.parse(tmp[1]);
-						validaciones_global = variaciones;
-						dataGlobal = detalles;
+						const rol = tmp[2];
 
+						let botones_accesos = "";
+						if(validar_acceso('producto_crear', rol)) {
+							botones_accesos = `
+							<div class="fixed-action-btn">
+								<a class="btn-floating btn-large btnppal" title="Crear ${seccion_legible}" onclick="plantillas('${seccion_singular}_crear', '')">
+									<i class="large material-icons">add</i>
+								</a>
+							</div>`;
+						}
+
+						let contenidoVariaciones = "";
+						if(datos != "") {
+
+							datos.forEach((dato, id) => {
+
+								let opciones = dato['vrd_ids'].split(",");
+								opciones = opciones.map((opcion) => { return parseInt(opcion) });
+
+								let contenidoDetalles = "";
+								for (detalle of detalles) {
+									
+									if(detalle['var_id'] == dato['var_id'] && opciones.indexOf(detalle['vrd_id']) > -1) {
+
+										const spanColor = dato['var_tipo'] == 2 ? `<span style="background-color: ${detalle['vrd_color']};"></span>` : "";
+										contenidoDetalles = contenidoDetalles + `
+										<div class="chip custom-chip">
+											${spanColor}
+											${detalle['vrd_nombre']}
+										</div>`;
+									}
+								}
+
+								contenidoVariaciones = contenidoVariaciones + `
+								<li class="collection-item custom-collection">
+									<div class="collection-head">
+										${dato['var_nombre']}
+									</div>
+									<div class="collection-body">
+										${contenidoDetalles}
+									</div>
+									<div class="collection-actions right-align">
+										<a onclick="plantillas('${seccion_singular}_editar','', '', '${pagina}','${busqueda}',${dato['prv_id']})" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Editar ${seccion_legible}"><i class="material-icons">edit</i></a>
+										<a onclick="eliminar_variacion(${dato['prv_id']}, '${modulo}', '${rol}', ${prd_id})" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar ${seccion_legible}"><i class="material-icons">delete</i></a>
+									</div>
+								</li>`;
+							});
+						} else {
+							contenidoVariaciones = "No hay registros";
+						}
+						
 						cmp.innerHTML = `
+						${botones_accesos}
 						<form action="">
-							<input type="" name="var_ids" id="var_ids" value="">
-							<input type="" name="vrd_ids" id="vrd_ids" value="">
 							<div class="row">
-								<div class="col s12 m2">
-									<input type="hidden" name="action" id="action" value="">
-									<a onclick="agregarVariantes()" class="btn waves-effect waves-light azulclaro"><i class="material-icons right">add</i>Agregar</a>
-								</div>
-								<div class="col s12 m4  offset-m4">
-									<div class="switch custom-switch">
-										<label>
-											<input type="checkbox" id="prd_destacado" name="prd_destacado" disabled>
-											<span class="lever custom-leaver"></span>
-											Inventario por variacion
-										</label>
+								<div class="col s6 m6 mb-30">
+									<div class="var-search">
+										<input class="var-search-input" type="search" id="search" placeholder="Buscar variaciones..." value="" autocomplete="off" onkeyup="buscar_variaciones(this, 'variaciones_productos')">
+										<i class="material-icons">search</i>
 									</div>
 								</div>
 								<div class="col s12 m12">
-									<ul class="collection " id="variaciones-container">
-										
+									<ul class="collection">
+										${contenidoVariaciones}
 									</ul>
 								</div>
 							</div>
-						</form>`;
-
-						
+						</form>`;	
 					}
 		
 				} else {
@@ -1542,5 +1512,248 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 				}
 			}
 		}
+	}
+	else
+	if(seccion == "pvariacion_crear")
+	{
+		const modulo = "pvariaciones";
+		const seccion_singular = "pvariacion";
+		const seccion_legible = "Variacion";
+
+		const modal = document.getElementById(`modal-archivos`);
+		modal.innerHTML = loaderComponent();
+
+		const id = getUrlParam('c');
+		var xhr = new XMLHttpRequest();
+		var params 	= `idioma=${cms_idioma}&id=${id}&action=obtener_crear`;
+		xhr.open("POST", `inc/${modulo}.php`,true);
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.send(params);
+		xhr.onreadystatechange = function()
+		{
+			if(xhr.readyState == 4)
+			{
+				if(xhr.status == 200)
+				{
+					data = xhr.responseText.trim();
+					// console.log(data);
+					if(data < 0) {
+						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
+						$(modal).modal('close');
+					} else {
+						
+						const tmp = data.split("::");
+						const variaciones = JSON.parse(tmp[0]);
+						
+						let optionVariaciones = "";
+						for(let i = 0; i < variaciones.length; i++) {
+							optionVariaciones = optionVariaciones + `<option value="${variaciones[i]['var_id']}">${variaciones[i]['var_nombre']}</option>`;
+						}
+
+						modal.innerHTML = `
+						<form method="POST" id="${seccion_singular}_form">
+							<div id="breadcrumbs-wrapper" class="breadcrumbs-bg-image">
+								<div class="container mt-0">
+									<div class="row mb-0">
+										<div class="col s12 m11 l11">
+											<h5 class="breadcrumbs-title mt-0 mb-0"><span>Agregar ${seccion_legible}</span></h5>
+										</div>
+										<span class="modal-action modal-close"><i class="material-icons">close</i></span>
+									</div>
+								</div>
+							</div>
+							<div class="modal-content">
+								<div class="panel">
+									<input type="hidden" id="prd_id" name="prd_id" value=${id}>
+									<div class="row">
+										<div class="col s12 m12 mb-20">
+											Asigna una variante y especifica qué elecciones tendrán que hacer tus clientes. <br>
+											(p. ej., en qué colores viene este producto).
+										</div>
+										<div class="col s12 m6 select">
+											<label>Variante</label>
+											<select name="var_id" id="var_id" onchange="validar(this)">
+												<option value="" selected disabled>Seleccióne una opción</option>
+												${optionVariaciones}
+											</select>
+											<div class="form-error" data-field="var_id"></div>
+										</div>
+										<div class="col s12 m12 select">
+											<label>Opciones</label>
+											<select name="vrd_id[]" id="vrd_id" onchange="validar(this)" multiple>
+												<option value="" selected disabled>Seleccióne una opción</option>
+												${optionVariaciones}
+											</select>
+											<div class="form-error" data-field="vrd_id"></div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<div class="row m-0">
+									<div class="col s12 m4 offset-m8">
+										<input type="hidden" name="action" id="action" value="crear">
+										<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Agregar ${seccion_legible}</button>
+									</div>
+								</div>
+							</div>
+						</form>`;
+
+						const $detalles = $('#vrd_id').selectize({
+							plugins: [
+								'remove_button'
+							],
+						});
+
+						const $variaciones = $('#var_id').selectize({
+							onChange: (value) => {
+								if(value != "") {
+									cargar_select("vdetalles", 0, $detalles, value);
+								}
+							}
+						});
+
+						M.updateTextFields();
+						validacion_pvariaciones(modulo, rol, id);
+					}
+		
+				} else {
+					M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
+					$(modal).modal('close');
+				}
+			}
+		}
+
+		// Configura el Modal y lo Abre 
+		$(modal).modal({dismissible: false});
+		var instance = M.Modal.getInstance(modal);
+		instance.open();
+	}
+	else
+	if(seccion == "pvariacion_editar")
+	{
+		const modulo = "pvariaciones";
+		const seccion_singular = "pvariacion";
+		const seccion_legible = "Variacion";
+
+		const modal = document.getElementById(`modal-archivos`);
+		modal.innerHTML = loaderComponent();
+
+		const prd_id = getUrlParam('c');
+		var xhr = new XMLHttpRequest();
+		var params 	= `idioma=${cms_idioma}&prd_id=${prd_id}&id=${id}&action=obtener_editar`;
+		xhr.open("POST", `inc/${modulo}.php`,true);
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.send(params);
+		xhr.onreadystatechange = function()
+		{
+			if(xhr.readyState == 4)
+			{
+				if(xhr.status == 200)
+				{
+					data = xhr.responseText.trim();
+					// console.log(data);
+					if(data < 0) {
+						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
+						$(modal).modal('close');
+					} else {
+						
+						const tmp = data.split("::");
+						const datos = JSON.parse(tmp[0]);
+						const variaciones = JSON.parse(tmp[1]);
+						const detalles = JSON.parse(tmp[2]);
+							
+
+						let optionVariaciones = "";
+						for(let i = 0; i < variaciones.length; i++) {
+							const selected = datos[0]['var_id'] == variaciones[i]['var_id'] ? "selected" : "";
+							optionVariaciones = optionVariaciones + `<option value="${variaciones[i]['var_id']}" ${selected}>${variaciones[i]['var_nombre']}</option>`;
+						}
+
+						let optionDetalles = "";
+						for(let i = 0; i < detalles.length; i++) {
+							optionDetalles = optionDetalles + `<option value="${detalles[i]['vrd_id']}">${detalles[i]['vrd_nombre']}</option>`;
+						}
+
+						modal.innerHTML = `
+						<form method="POST" id="${seccion_singular}_form">
+							<div id="breadcrumbs-wrapper" class="breadcrumbs-bg-image">
+								<div class="container mt-0">
+									<div class="row mb-0">
+										<div class="col s12 m11 l11">
+											<h5 class="breadcrumbs-title mt-0 mb-0"><span>Editar ${seccion_legible}</span></h5>
+										</div>
+										<span class="modal-action modal-close"><i class="material-icons">close</i></span>
+									</div>
+								</div>
+							</div>
+							<div class="modal-content">
+								<div class="panel">
+									<input type="hidden" id="prv_id" name="prv_id" value=${datos[0]['prv_id']}>
+									<div class="row">
+										<div class="col s12 m12 mb-20">
+											Asigna una variante y especifica qué elecciones tendrán que hacer tus clientes. <br>
+											(p. ej., en qué colores viene este producto).
+										</div>
+										<div class="col s12 m6 select">
+											<label>Variante</label>
+											<select name="var_id" id="var_id" onchange="validar(this)">
+												<option value="" selected disabled>Seleccióne una opción</option>
+												${optionVariaciones}
+											</select>
+											<div class="form-error" data-field="var_id"></div>
+										</div>
+										<div class="col s12 m12 select">
+											<label>Opciones</label>
+											<select name="vrd_id[]" id="vrd_id" onchange="validar(this)" multiple>
+												<option value="" selected disabled>Seleccióne una opción</option>
+												${optionDetalles}
+											</select>
+											<div class="form-error" data-field="vrd_id"></div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<div class="row m-0">
+									<div class="col s12 m4 offset-m8">
+										<input type="hidden" name="action" id="action" value="editar">
+										<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Editar ${seccion_legible}</button>
+									</div>
+								</div>
+							</div>
+						</form>`;
+
+						const $detalles = $('#vrd_id').selectize({
+							plugins: [
+								'remove_button'
+							],
+						});
+						const control = $detalles[0].selectize;
+						control.setValue(datos[0]['vrd_ids'].split(","));
+
+						const $variaciones = $('#var_id').selectize({
+							onChange: (value) => {
+								if(value != "") {
+									cargar_select("vdetalles", 0, $detalles, value);
+								}
+							}
+						});
+
+						M.updateTextFields();
+						validacion_pvariaciones(modulo, rol, prd_id);
+					}
+		
+				} else {
+					M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
+					$(modal).modal('close');
+				}
+			}
+		}
+
+		// Configura el Modal y lo Abre 
+		$(modal).modal({dismissible: false});
+		var instance = M.Modal.getInstance(modal);
+		instance.open();
 	}
 }

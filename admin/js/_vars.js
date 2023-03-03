@@ -3,8 +3,10 @@ let cms_traducciones = "";
 let cms_idioma = "";
 let cms_datos = [];
 let rol_global = 0;
-let validaciones_global = [];
+let validacionesGlobal = [];
 let dataGlobal = [];
+let variacionesGlobal = [];
+let usadosglobal = [];
 
 // TODO: Tipos de variación
 const variaciones_tipos = [

@@ -5,7 +5,8 @@
 ?>
 
 <div class="container">
-	<div class="card-panel" id="pvariaciones"></div>
+	<div class="card-panel" id="pvariaciones">
+	</div>
 </div>
 <div id="modal-pvariaciones" class="modal modal-meddium modal-fixed-footer"></div>
 <div id="modal-archivos" class="modal modal-small modal-fixed-footer"></div>
@@ -18,6 +19,6 @@
 <script>
 	document.addEventListener("DOMContentLoaded", () => {
 		const id = getUrlParam('c');
-		plantillas('pvariaciones', '', '', cms_pagina, cms_busqueda, id);
+		plantillas('pvariaciones', '', <?php echo $usr_rol ?>, cms_pagina, cms_busqueda, id);
 	});
 </script>

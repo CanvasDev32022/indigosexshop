@@ -439,6 +439,16 @@
 
 			// Se genera la imagen
 			$thumb = imagecreatetruecolor($width, $height);
+			if($archivo[1] == "png") {
+				// TODO: representación entera del color negro (rgb: 0,0,0)
+				$background = imagecolorallocate($thumb , 0, 0, 0);
+				// TODO: Eliminando la negra del marcador de posición
+				imagecolortransparent($thumb, $background);
+				// TODO: desactivar la combinación alfa (para garantizar la información del canal alfa se conserva, en lugar de eliminarse (mezclarse con el resto de la imagen en forma de negro))
+				imagealphablending($thumb, false);
+				// TODO: activar el ahorro de información del canal alfa (para garantizar que se conserve el rango completo de transparencia)
+				imagesavealpha($thumb, true);
+			}
 			imagecopyresampled($thumb,$nuevo,0,0,0,0,$width,$height,$size[0],$size[1]);
 
 			$thumb_name = $url.$archivo[0].$tipo.".".$archivo[1];
