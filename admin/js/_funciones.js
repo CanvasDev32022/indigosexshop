@@ -765,7 +765,7 @@ const activarPromocion = (cmp, porentaje = 0) => {
 
 		calcularPromocion();
 		// TODO: Agregar Validaciones
-		validaciones_global.push(
+		validacionesGlobal.push(
 			['prd_porcentajepromocion', '','required'],
 			['prd_preciopromocion', 	'','required']
 		);
@@ -774,12 +774,12 @@ const activarPromocion = (cmp, porentaje = 0) => {
 		container.innerHTML = ``;
 		
 		const validaciones = [];
-		for (var i = 0; i < validaciones_global.length; i++) {
-			if(validaciones_global[i][0] != "prd_porcentajepromocion" && validaciones_global[i][0] != "prd_preciopromocion") {
-				validaciones.push(validaciones_global[i]);
+		for (var i = 0; i < validacionesGlobal.length; i++) {
+			if(validacionesGlobal[i][0] != "prd_porcentajepromocion" && validacionesGlobal[i][0] != "prd_preciopromocion") {
+				validaciones.push(validacionesGlobal[i]);
 			}
 		}
-		validaciones_global = validaciones;
+		validacionesGlobal = validaciones;
 	}
 
 	M.updateTextFields();
@@ -996,4 +996,245 @@ const eliminar_variacion = (id, seccion, rol, producto) => {
 			}
 		} 
 	});
+}
+
+// TODO: Bucador de variaciones
+const buscar_variaciones = (cmp, seccion) => {
+
+	const filter = cmp.value.toUpperCase();
+	const section = document.getElementById(seccion);
+	const collections = section.getElementsByTagName("li");
+	const table = section.getElementsByTagName("table");
+
+	let nombre = "";
+	let items = "";
+	const palabrasFiltro = filter.split(" ");
+	if(collections.length > 0) {
+		for (var i = 0; i < collections.length; i++) {
+			
+			nombre = collections[i].querySelectorAll('div[class="collection-head"]')[0];
+			items = collections[i].querySelectorAll('div[class="chip custom-chip"]');
+
+			let nombreItems = "";
+			let halladoItems = 0;
+			for (var j = 0; j < items.length; j++) {
+				nombreItems = items[j].innerHTML;
+				nombreItems = nombreItems.replace(/<[^>]+>/g, ''); // TODO: Retirar etiquetas html
+				nombreItems = nombreItems.trim();
+
+				if(nombreItems) {
+
+					for(let filtro of palabrasFiltro) {
+						if(nombreItems.toUpperCase().indexOf(filtro) > -1) {
+							halladoItems++;
+						}
+					}
+				}
+			}
+
+			if(nombre) {
+
+				nombre = nombre.innerHTML.trim();
+				let hallado = 0;
+				for(let filtro of palabrasFiltro) {
+					if(nombre.toUpperCase().indexOf(filtro) > -1) {
+						hallado++;
+					}
+				}
+
+				if(hallado === palabrasFiltro.length || halladoItems == palabrasFiltro.length) {
+					collections[i].style.display = "";
+				} else {
+					collections[i].style.display = "none";
+				}
+			}
+		}	
+	}
+
+	if(table.length > 0) {
+
+		let celdas = table[0].querySelectorAll("tr");
+		for (var i = 0; i < celdas.length; i++) {
+			
+			nombre = celdas[i].querySelectorAll("td")[0];
+			if(nombre) {
+
+				let hallado = 0;
+				for(let filtro of palabrasFiltro) {
+					if(nombre.innerHTML.toUpperCase().indexOf(filtro) > -1) {
+						hallado++;
+					}
+				}
+
+				if(hallado === palabrasFiltro.length) {
+					celdas[i].style.display = "";
+				} else {
+					celdas[i].style.display = "none";
+				}
+			}
+		}
+	}
+	
+}
+
+// TODO: 
+const agregarInventarioVariante = (cmp, producto) => {
+
+	cmp.checked = false;
+	cmp.disabled = true;
+
+	var xhr = new XMLHttpRequest();
+	var params 	= `idioma=${cms_idioma}&producto=${producto}&action=obtener_variaciones`;
+	xhr.open("POST", `inc/pvariaciones.php`,true);
+	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	xhr.send(params);
+	xhr.onreadystatechange = function()
+	{
+		if(xhr.readyState == 4)
+		{
+			if(xhr.status == 200)
+			{
+				data = xhr.responseText.trim();
+				// console.log(data);
+				if(data < 0) {
+					M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
+				} else {
+					
+					const tmp = data.split("::");
+					const variaciones = JSON.parse(tmp[0]);
+					const combinaciones = JSON.parse(tmp[1]);
+					const producto = JSON.parse(tmp[2]);
+					const datos = JSON.parse(tmp[3]);
+					const detalles = JSON.parse(tmp[4]);
+
+					let contenedorInventario = document.querySelector(`#pvariaciones-inventario`);
+					let contenidoInventario = "";
+					let inventario = "";
+					combinaciones.forEach((combinacion, ic) => {
+
+						// TODO: ESTABLECEMOS EL NOMBRE DE LA VARIACION
+						let pri_id = 0;
+						let nombre = "";
+						let precio = producto[0]['prd_precio'];
+						let cantidad = 10;
+						const tmpDetalles = combinacion.split(",");
+						tmpDetalles.forEach((tmpDetalle, i3) => {
+							detalles.forEach((detalle, i4) => {
+								if(parseInt(tmpDetalle) == parseInt(detalle['vrd_id'])) {
+									nombre = nombre + `${detalle['vrd_nombre']} `;
+								}
+							});
+						});
+
+						inventario = inventario + `
+						<tr>
+							<td>
+								<input type="hidden" name="pri_id[]" id="pri_id-${ic}" value="${pri_id}">
+								<input type="hidden" name="vrd_id[]" id="vrd_id-${ic}" value="${combinacion}">
+								${nombre}
+							</td>
+							<td>
+								<input type="text" name="price[]" id="price-${ic}" class="right-align" autocomplete="off" placeholder="" onkeyup="ajustar_valor(this)" value="${ajustarPrecio(precio)}">
+							</td>
+							<td>
+								<input type="hidden" name="stockBefore[]" id="stockBefore-${ic}" value="${cantidad}">
+								${cantidad}
+							</td>
+							<td>
+								<input type="number" name="stock[]" id="stock-${ic}" class="right-align" autocomplete="off" placeholder="" value="0">
+							</td>
+							<td>
+								<div class="switch custom-switch">
+									<label>
+										<input type="checkbox" name="visible[]" id="visible-${ic}" data-input="productos">
+										<span class="lever custom-leaver"></span>
+									</label>
+								</div>
+							</td>
+						</tr>`;
+					});
+
+					contenidoInventario = `
+					<form metod="POST" id="pvinventario_form">
+						<ul class="collapsible custom-collapsible" id="combinaciones-productos">
+							<li class="active">
+								<div class="collapsible-header">Inventario: </div>
+								<div class="collapsible-body">
+									<input type="hidden" name="prd_id" id="prd_id" value="${producto}">
+									<input type="hidden" name="var_id" id="var_id" value="${variaciones}">
+									<div class="row">
+										<div class="col s12 m2">
+											<input type="hidden" name="action" id="action" value="pviventario">
+											<button type="submit" id="action_pvinventario" class="btn waves-effect waves-light azulclaro">Guardar</button>
+										</div>
+										<div class="col s6 m10">
+											<div class="var-actions">
+												<p>
+													<label>
+													<input type="checkbox" id="checked-all" onchange="checked_inputs(this, 'combinaciones-productos')" />
+													<span>Marcar</span>
+													</label>
+												</p>
+											</div>
+										</div>
+										<div class="col s12 m12">
+											<table class="custom-table">
+												<thead>
+													<tr>
+														<th class="table-20">Variacion</th>
+														<th class="table-20">Precio</th>
+														<th class="table-20">Stock Actual</th>
+														<th class="table-20">Stock</th>
+														<th class="table-20">Mostrar</th>
+													</tr>
+												</thead>
+												<tbody>
+													${inventario}
+												</tbody>
+											</table>
+										</div>
+									</div>
+								</div>
+							</li>
+						</ul>
+					</form>`;
+
+					contenedorInventario.innerHTML = contenidoInventario;
+					$('.collapsible').collapsible();
+					cmp.disabled = false;
+					cmp.checked = true;
+
+					M.updateTextFields();
+					validacion_pvinventario();
+
+				}
+	
+			} else {
+				M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
+			}
+		}
+	}
+}
+
+// TODO: Checked all buttons
+const checked_inputs = (cmp, seccion) => {
+
+	const checked = cmp.checked
+	const section = document.getElementById(seccion);
+
+	const checkbox = section.querySelectorAll('input[type="checkbox"]');
+	for (var i = 0; i < checkbox.length; i++) {
+
+		if(checked) {
+
+			if(!checkbox[i].checked) {
+				checkbox[i].checked = true;
+			}
+
+		} else {
+			if(checkbox[i].checked) {
+				checkbox[i].checked = false;
+			}			
+		}	
+	}
 }

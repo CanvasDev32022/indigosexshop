@@ -1437,6 +1437,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 						const datos = JSON.parse(tmp[0]);
 						const detalles = JSON.parse(tmp[1]);
 						const rol = tmp[2];
+						const prd_id = datos != "" ? datos[0]['prd_id'] : 0;
 
 						let botones_accesos = "";
 						if(validar_acceso('producto_crear', rol)) {
@@ -1490,12 +1491,21 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 						
 						cmp.innerHTML = `
 						${botones_accesos}
-						<form action="">
+						<form method="POST" id="">
 							<div class="row">
 								<div class="col s6 m6 mb-30">
 									<div class="var-search">
-										<input class="var-search-input" type="search" id="search" placeholder="Buscar variaciones..." value="" autocomplete="off" onkeyup="buscar_variaciones(this, 'variaciones_productos')">
+										<input class="var-search-input" type="search" id="search" placeholder="Buscar variaciones..." value="" autocomplete="off" onkeyup="buscar_variaciones(this, 'variantes')">
 										<i class="material-icons">search</i>
+									</div>
+								</div>
+								<div class="col s12 m4 offset-m2 right-align">
+									<div class="switch custom-switch">
+										<label>
+											<input type="checkbox" id="prd_nuevo" name="prd_nuevo" onclick="agregarInventarioVariante(this, ${prd_id})">
+											<span class="lever custom-leaver"></span>
+											Inventario por variantes
+										</label>
 									</div>
 								</div>
 								<div class="col s12 m12">
@@ -1504,7 +1514,13 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 									</ul>
 								</div>
 							</div>
-						</form>`;	
+						</form>`;
+
+						cmp.querySelector(`#search`).addEventListener("keypress", (e) => {
+							if(e.key == "Enter") {
+								e.preventDefault();
+							}
+						});
 					}
 		
 				} else {

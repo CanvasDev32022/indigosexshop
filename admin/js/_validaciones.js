@@ -238,7 +238,7 @@ const validacion_productos = (seccion) => {
 		const boton = document.getElementById(`action_${seccion_singular}`);
 		boton.setAttribute("disabled", "disabled");
 
-		validaciones_global.push(
+		validacionesGlobal.push(
 			['archivos_input-0', 		'', 'required'],
 			['prd_nombre', 				'', 'required', 'length=1,100'],
 			['prd_referencia',			'', 'lengthPass=1,50'],
@@ -251,7 +251,7 @@ const validacion_productos = (seccion) => {
 			['pct_id',					'', 'required'],
 		);
 		
-		const respuesta = validar_formulario(validaciones_global, false);
+		const respuesta = validar_formulario(validacionesGlobal, false);
 		if(respuesta) {
 
 			let prd_metakeywords = "";
@@ -433,6 +433,56 @@ const validacion_pvariaciones = (seccion, rol, producto) => {
 				
 		} else {
 			boton.removeAttribute("disabled");
+		}
+	});
+}
+
+// TODO: VALIDACION INVENTARIO VARIACIONES DE PRODUCTO
+const validacion_pvinventario = (seccion) => {
+
+	const seccion_singular = "pvinventario";
+	const seccion_legible = "Variacion";
+
+	const formulario = document.querySelector(`#${seccion_singular}_form`);
+	formulario.addEventListener("submit", (e) => {
+		e.preventDefault();
+
+		const boton = document.querySelector(`#action_${seccion_singular}`);
+		boton.disabled = true;
+
+		const validaciones = [];
+		const respuesta = validar_formulario(validaciones, false);
+		if(respuesta) {
+
+			var xhr = new XMLHttpRequest();
+			var params 	= new FormData(formulario);
+			xhr.open("POST", `inc/pvariaciones.php`,true);
+			xhr.addEventListener("error",errorHandler, false);
+			xhr.addEventListener("abort", abortHandler, false);
+			xhr.send(params);
+			xhr.onreadystatechange = function()
+			{
+				if(xhr.readyState == 4)
+				{
+					if(xhr.status == 200)
+					{
+						data = xhr.responseText.trim();
+						console.log(data);
+						if(data < 0) {
+							M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
+						} else {
+							
+						}
+			
+					} else {
+						M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
+					}
+					boton.disabled = false;
+				}
+			}
+
+		} else {
+			boton.disabled = false;
 		}
 	});
 }

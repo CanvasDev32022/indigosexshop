@@ -4,8 +4,10 @@
 	include("mod/aside.php");
 ?>
 
-<div class="container">
-	<div class="card-panel" id="pvariaciones">
+<div class="container" id="variantes">
+	<div class="card-panel mb-20" id="pvariaciones">
+	</div>
+	<div id="pvariaciones-inventario">
 	</div>
 </div>
 <div id="modal-pvariaciones" class="modal modal-meddium modal-fixed-footer"></div>
