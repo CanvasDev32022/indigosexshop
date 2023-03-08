@@ -12,7 +12,7 @@
 	if($_POST['action'] == "lista")
 	{
 		$idioma = $_POST['idioma'];
-		$prepare = "SELECT prv_id, prv.var_id, var.var_nombre, var.var_tipo, vrd_ids FROM productos_variaciones prv INNER JOIN variaciones var ON(var.var_id = prv.var_id) WHERE prd_id = ? AND prv_borrado = 0 ORDER BY var.var_nombre ASC";
+		$prepare = "SELECT prd_id, prv_id, prv.var_id, var.var_nombre, var.var_tipo, vrd_ids FROM productos_variaciones prv INNER JOIN variaciones var ON(var.var_id = prv.var_id) WHERE prd_id = ? AND prv_borrado = 0 ORDER BY var.var_nombre ASC";
 		$params = [intval($_POST['id'])];
 		$types = ['i'];
 		$prvS = $toolSQL->selectSQL($prepare, $types, $params);
@@ -124,5 +124,121 @@
 		$types = ['i'];
 		$prvU = $toolSQL->updateSQL($prepare, $types, $params);
 		echo $prvU;
+	}
+	elseif($_POST['action'] == "obtener_variaciones")
+	{
+		$idioma = $_POST['idioma'];
+		$prepare = "SELECT var_id, vrd_ids FROM productos_variaciones WHERE prd_id = ? ORDER BY prv_id ASC";
+		$params = [intval($_POST['producto'])];
+		$types = ['i'];
+		$prvS = $toolSQL->selectSQL($prepare, $types, $params);
+		if($prvS < 0)
+			echo -1;
+		else
+		{
+			if($prvS == 0)
+				echo 0;
+			else
+			{
+				$variacionesPadre = [];
+				$combinaciones = [];
+				$combinacionesTMP = [];
+
+				foreach ($prvS as $keyP => $variacion) {
+
+					$opciones = explode(",", $variacion['vrd_ids']);
+					if(count($combinacionesTMP) == 0) {
+						
+						$index = array_search(intval($variacion['var_id']), $variacionesPadre);
+						if($index === false) {
+							array_push($variacionesPadre, intval($variacion['var_id']));
+						}
+
+						foreach($opciones as $keyO => $detalle) {
+							array_push($combinaciones, $detalle);
+						}
+						$combinacionesTMP = $combinaciones;
+
+					} else {
+						
+						$index = array_search(intval($variacion['var_id']), $variacionesPadre);
+						if($index === false) {
+							array_push($variacionesPadre, intval($variacion['var_id']));
+						}
+
+						$combinaciones = [];
+
+						foreach ($combinacionesTMP as $keyC => $comb) {
+							foreach($opciones as $keyO => $detalle) {
+								array_push($combinaciones, $comb.",".$detalle);
+							}
+						}
+
+						if(count($combinaciones) > 0) {
+							$combinacionesTMP = $combinaciones;
+						}
+					}
+				};
+
+				if(count($combinaciones) > 0) {
+
+					if(isset($_POST['producto'])) { 
+
+						$prepare = "SELECT prd_id, prd_nombre, prd_precio FROM productos WHERE prd_id = ?";
+						$params = [intval($_POST['producto'])];
+						$types = ['i'];
+						$padS = $toolSQL->selectSQL($prepare, $types, $params);
+						if($padS < 0) {
+							echo -3;
+						} else {
+
+							$prepare = "
+								SELECT prd_precio, prs_id, prd_visible, prd_promocion, pri.vrd_ids, prd.prd_id, pri.pri_inventario 
+								FROM productos prd 
+								LEFT JOIN productos_inventario pri ON(pri.prd_id = prd.prd_id) 
+								WHERE prd_padre = ?";
+							$params = [intval($_POST['producto'])];
+							$types = ['i'];
+							$prdS = $toolSQL->selectSQL($prepare,$types,$params);
+							if($prdS < 0) {
+								echo -4;
+							} else {
+
+								$prepare = "SELECT * FROM variaciones_detalles WHERE ? ORDER BY var_id ASC";
+								$params = [1];
+								$types = ['i'];
+								$vrdS = $toolSQL->selectSQL($prepare, $types, $params);
+								if($vrdS < 0) {
+									echo -5;
+								} else {
+									echo json_encode($variacionesPadre)."::".json_encode($combinaciones)."::".json_encode($padS)."::".json_encode($prdS)."::".json_encode($vrdS);
+								}
+							}
+						}
+
+					} else {
+						echo -2;
+					}
+
+				} else {
+					echo 0;
+				}
+			}
+		}
+	}
+	elseif($_POST['action'] == "pviventario")
+	{
+		$prepare = "SELECT pri_id, prd_id, vrd_ids, pri_inventario FROM productos_inventario WHERE prd_id = ?";
+		$params = [intval($_POST['prd_id'])];
+		$types = ['i'];
+		$priS = $toolSQL->selectSQL($prepare, $types, $params);
+		if($priS < 0)
+			echo -1;
+		else
+		{
+			print_r($_POST);
+			print_r($priS);
+			// if($priS )
+		}
 	}
 ?>
