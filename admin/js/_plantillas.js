@@ -878,7 +878,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 														<li class="active">
 															<div class="collapsible-header">PRODUCTOS RELACIONADOS</div>
 															<div class="collapsible-body">
-																<div class="row">
+																<div class="row m-0">
 																	<div class="col s12 m9 select">
 																		<select id="prd_relacionado" onchange="validar(this)">
 																			<option value="">Seleccione una opción</option>
@@ -891,6 +891,22 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 																	</div>
 																	<div class="col s12 m12">
 																		<ul class="collection" id="relacionado-collection"></ul>
+																	</div>
+																</div>
+															</div>
+														</li>
+													</ul>
+												</div>
+												<div class="col s12 m12">
+													<ul class="collapsible custom-collapsible">
+														<li class="active">
+															<div class="collapsible-header">Inventario</div>
+															<div class="collapsible-body">
+																<div class="row m-0">
+																	<div class="col s12 m12 input-field">
+																		<input type="number" name="pri_inventario" id="pri_inventario" autocomplete="off" placeholder="" onkeyup="validar(this)" value="0">
+																		<label>Cantidad en stock</label>
+																		<div class="form-error" data-field="pri_inventario"></div>
 																	</div>
 																</div>
 															</div>
@@ -942,6 +958,9 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							.catch(error => { console.error( error ); } );
 
 						document.getElementById("agregar-relacionado").addEventListener("click", aniadirRelacionados, false);
+						validacionesGlobal.push(
+							['pri_inventario',			'', 'required', 'numero'],
+						);
 						M.updateTextFields();
 						validacion_productos(modulo);
 					}
@@ -1034,8 +1053,8 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 						}
 
 						// TODO: Metaimagenes (SEO)
-						const metaimagena = datos[0]['prd_metaimagenc'] != "" ? `../uploads/productos/${datos[0]['prd_metaimagenc']}` : "";
-						const metaimagenb = datos[0]['prd_metaimagend'] != "" ? `../uploads/productos/${datos[0]['prd_metaimagend']}` : "";
+						const metaimagena = datos[0]['prd_metaimagenc'] != "" ? `../uploads/productos/seo/${datos[0]['prd_metaimagenc']}` : "";
+						const metaimagenb = datos[0]['prd_metaimagend'] != "" ? `../uploads/productos/seo/${datos[0]['prd_metaimagend']}` : "";
 
 						// TODO: Promocion
 						let promocionActiva = "";
@@ -1088,6 +1107,41 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 									}
 								}
 							});
+						}
+
+						// TODO: Inventario de producto (Si no existen variaciones)
+						let contenedorInventario = "";
+						if(datos[0]['vrd_ids'] == "") {
+							
+							contenedorInventario = contenedorInventario + `
+							<div class="col s12 m12">
+								<ul class="collapsible custom-collapsible">
+									<li class="active">
+										<div class="collapsible-header">Inventario</div>
+										<div class="collapsible-body">
+											<div class="row m-0">
+												<div class="col s12 m12 mb-20">
+													<i>La cantidad se suamara a la cantidad actual del producto.</i>
+												</div>
+												<div class="col s12 m12 input-field">
+													<input type="number" autocomplete="off" placeholder="" onkeyup="validar(this)" value="${datos[0]['pri_inventario']}" readonly>
+													<label>Cantidad actual</label>
+													<div class="form-error" data-field="pri_inventario"></div>
+												</div>
+												<div class="col s12 m12 input-field">
+													<input type="number" name="pri_inventario" id="pri_inventario" autocomplete="off" placeholder="" onkeyup="validar(this)" value="0">
+													<label>Cantidad</label>
+													<div class="form-error" data-field="pri_inventario"></div>
+												</div>
+											</div>
+										</div>
+									</li>
+								</ul>
+							</div>`;
+
+							validacionesGlobal.push(
+								['pri_inventario',			'', 'required', 'numero'],
+							);
 						}
 
 						modal.innerHTML = `
@@ -1328,6 +1382,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 														</li>
 													</ul>
 												</div>
+												${contenedorInventario}
 											</div>
 										</div>
 									</div>
@@ -1436,7 +1491,8 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 						const tmp = data.split("::");
 						const datos = JSON.parse(tmp[0]);
 						const detalles = JSON.parse(tmp[1]);
-						const rol = tmp[2];
+						const producto = JSON.parse(tmp[2]);
+						const rol = tmp[3];
 						const prd_id = datos != "" ? datos[0]['prd_id'] : 0;
 
 						let botones_accesos = "";
@@ -1489,6 +1545,16 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							contenidoVariaciones = "No hay registros";
 						}
 						
+						let activo = "";
+						if(producto != "") {
+
+							if(producto[0]['conteo'] != 0) {
+								activo = "checked";
+							}
+						} else {
+							activo = "disabled";
+						}
+
 						cmp.innerHTML = `
 						${botones_accesos}
 						<form method="POST" id="">
@@ -1502,7 +1568,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 								<div class="col s12 m4 offset-m2 right-align">
 									<div class="switch custom-switch">
 										<label>
-											<input type="checkbox" id="prd_nuevo" name="prd_nuevo" onclick="agregarInventarioVariante(this, ${prd_id})">
+											<input type="checkbox" id="pvinventario" onclick="agregarInventarioVariante(this, ${prd_id})" ${activo}>
 											<span class="lever custom-leaver"></span>
 											Inventario por variantes
 										</label>
@@ -1521,6 +1587,26 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 								e.preventDefault();
 							}
 						});
+
+						if(producto != "") {
+
+							if(producto[0]['conteo'] != 0) {
+								const checkedVariaciones = document.querySelector('#pvinventario');
+								agregarInventarioVariante(checkedVariaciones, prd_id)
+							}
+						}
+
+						const coleciones = cmp.querySelectorAll(`li[class="collection-item custom-collection"]`);
+						if(coleciones.length > 0) {
+							for (var i = 0; i < coleciones.length; i++) {
+
+								coleciones[i].style.cursor = "pointer";
+								coleciones[i].addEventListener("click", (e) => {
+									plantillas(`${seccion_singular}_galeria`, '');
+								});
+							}
+						}
+
 					}
 		
 				} else {
@@ -1678,8 +1764,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 						const datos = JSON.parse(tmp[0]);
 						const variaciones = JSON.parse(tmp[1]);
 						const detalles = JSON.parse(tmp[2]);
-							
-
+						
 						let optionVariaciones = "";
 						for(let i = 0; i < variaciones.length; i++) {
 							const selected = datos[0]['var_id'] == variaciones[i]['var_id'] ? "selected" : "";
@@ -1705,6 +1790,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							</div>
 							<div class="modal-content">
 								<div class="panel">
+									<input type="hidden" id="prd_id" name="prd_id" value=${datos[0]['prd_id']}>
 									<input type="hidden" id="prv_id" name="prv_id" value=${datos[0]['prv_id']}>
 									<div class="row">
 										<div class="col s12 m12 mb-20">
@@ -1758,6 +1844,86 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 
 						M.updateTextFields();
 						validacion_pvariaciones(modulo, rol, prd_id);
+					}
+		
+				} else {
+					M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
+					$(modal).modal('close');
+				}
+			}
+		}
+
+		// Configura el Modal y lo Abre 
+		$(modal).modal({dismissible: false});
+		var instance = M.Modal.getInstance(modal);
+		instance.open();
+	}
+	else
+	if(seccion == "pvariacion_galeria")
+	{
+		const modulo = "pvariaciones";
+		const seccion_singular = "pvariacion";
+		const seccion_legible = "Variante";
+
+		const modal = document.getElementById(`modal-archivos`);
+		modal.innerHTML = loaderComponent();
+
+		const producto = getUrlParam('c');
+		var xhr = new XMLHttpRequest();
+		var params 	= `idioma=${cms_idioma}&producto=${producto}&action=obtener_galeria`;
+		xhr.open("POST", `inc/${modulo}.php`,true);
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.send(params);
+		xhr.onreadystatechange = function()
+		{
+			if(xhr.readyState == 4)
+			{
+				if(xhr.status == 200)
+				{
+					data = xhr.responseText.trim();
+					console.log(data);
+					if(data < 0) {
+						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: data`, classes: 'toasterror'});
+						$(modal).modal('close');
+					} else {
+						
+						const tmp = data.split("::");
+						const variantes = JSON.parse(tmp[0]);
+
+						console.log(variantes);
+
+						modal.innerHTML = `
+						<form method="POST" id="${seccion_singular}_form">
+							<div id="breadcrumbs-wrapper" class="breadcrumbs-bg-image">
+								<div class="container mt-0">
+									<div class="row mb-0">
+										<div class="col s12 m11 l11">
+											<h5 class="breadcrumbs-title mt-0 mb-0"><span>Agregar imágenes a ${seccion_legible}</span></h5>
+										</div>
+										<span class="modal-action modal-close"><i class="material-icons">close</i></span>
+									</div>
+								</div>
+							</div>
+							<div class="modal-content">
+								<div class="panel">
+									<div class="row">
+										<div class="col s12 m12 mb-20">
+											<i>Selecciona una variante y administra la galería que deseas que los clientes vean.</i>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<div class="row m-0">
+									<div class="col s12 m4 offset-m8">
+										<input type="hidden" name="action" id="action" value="crear">
+										<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Guardar</button>
+									</div>
+								</div>
+							</div>
+						</form>`;
+
+						
 					}
 		
 				} else {

@@ -285,9 +285,9 @@ const validacion_productos = (seccion) => {
 							else
 								M.toast({html: `La ${seccion_legible} se ha editado correctamente.`, classes: 'toastdone'});
 
-							// $(`#modal-${seccion}`).modal('close');
+							$(`#modal-${seccion}`).modal('close');
 							var variables = obtener_variables();
-							// formulario.innerHTML = "";
+							formulario.innerHTML = "";
 							cargar_registros(seccion, variables[0],variables[1]);
 
 						}
@@ -422,6 +422,13 @@ const validacion_pvariaciones = (seccion, rol, producto) => {
 							var variables = obtener_variables();
 							formulario.innerHTML = "";
 							plantillas(seccion, '', rol,  variables[0],variables[1], producto);
+
+							if(data == 2) {
+								const checkedVariaciones = document.querySelector('#pvinventario');
+								agregarInventarioVariante(checkedVariaciones, producto);
+							} else {
+								document.querySelector(`#pvariaciones-inventario`).innerHTML = "";
+							}
 						}
 			
 					} else {
@@ -438,7 +445,7 @@ const validacion_pvariaciones = (seccion, rol, producto) => {
 }
 
 // TODO: VALIDACION INVENTARIO VARIACIONES DE PRODUCTO
-const validacion_pvinventario = (seccion) => {
+const validacion_pvinventario = (seccion, producto) => {
 
 	const seccion_singular = "pvinventario";
 	const seccion_legible = "Variacion";
@@ -449,6 +456,14 @@ const validacion_pvinventario = (seccion) => {
 
 		const boton = document.querySelector(`#action_${seccion_singular}`);
 		boton.disabled = true;
+
+		
+		const checkedInputs = document.querySelectorAll(`input[type="checkbox"][name="visible[]"]`);
+		for (var i = 0; i < checkedInputs.length; i++) {
+			if(checkedInputs[i].checked) {
+				document.querySelector(`input[type="hidden"][id="${checkedInputs[i].id}"]`).disabled = true;
+			}
+		}
 
 		const validaciones = [];
 		const respuesta = validar_formulario(validaciones, false);
@@ -472,6 +487,9 @@ const validacion_pvinventario = (seccion) => {
 							M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
 						} else {
 							
+							const checkedVariaciones = document.querySelector('#pvinventario');
+							agregarInventarioVariante(checkedVariaciones, producto);
+
 						}
 			
 					} else {

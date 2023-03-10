@@ -964,13 +964,11 @@ const eliminar_variacion = (id, seccion, rol, producto) => {
 		confirmButtonText: "Confirmar",
 		cancelButtonText: "Cancelar",
 		reverseButtons: true
-	})
-
-		.then((result) => {
-			if (result.isConfirmed)
+	}).then((result) => {
+		if (result.isConfirmed)
 		{
 			var xhr_usr = new XMLHttpRequest();
-			var params = "id="+id+"&action=eliminar";
+			var params = `id=${id}&prd_id=${producto}&action=eliminar`;
 			xhr_usr.open("POST", "inc/"+seccion+".php",true);
 			xhr_usr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 			xhr_usr.send(params);
@@ -988,6 +986,12 @@ const eliminar_variacion = (id, seccion, rol, producto) => {
 						{
 							M.toast({html: "El registro ha sido eliminado correctamente.", classes: 'toastdone'});
 							plantillas('pvariaciones', '', rol, '', '', producto);
+							if(data == 2) {
+								const checkedVariaciones = document.querySelector('#pvinventario');
+								agregarInventarioVariante(checkedVariaciones, producto);
+							} else {
+								document.querySelector(`#pvariaciones-inventario`).innerHTML = "";
+							}
 						}
 					}
 					else
@@ -1077,142 +1081,256 @@ const buscar_variaciones = (cmp, seccion) => {
 	
 }
 
-// TODO: 
-const agregarInventarioVariante = (cmp, producto) => {
+// TODO: Agregar opciones de invenario por varaición
+const agregarInventarioVariante = (cmp, idProducto) => {
+	
+	checked = cmp.checked;
+	if(checked) {
 
-	cmp.checked = false;
-	cmp.disabled = true;
+		cmp.checked = false;
+		cmp.disabled = true;
 
-	var xhr = new XMLHttpRequest();
-	var params 	= `idioma=${cms_idioma}&producto=${producto}&action=obtener_variaciones`;
-	xhr.open("POST", `inc/pvariaciones.php`,true);
-	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-	xhr.send(params);
-	xhr.onreadystatechange = function()
-	{
-		if(xhr.readyState == 4)
+		var xhr = new XMLHttpRequest();
+		var params 	= `idioma=${cms_idioma}&producto=${idProducto}&action=obtener_variaciones`;
+		xhr.open("POST", `inc/pvariaciones.php`,true);
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.send(params);
+		xhr.onreadystatechange = function()
 		{
-			if(xhr.status == 200)
+			if(xhr.readyState == 4)
 			{
-				data = xhr.responseText.trim();
-				// console.log(data);
-				if(data < 0) {
-					M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
-				} else {
-					
-					const tmp = data.split("::");
-					const variaciones = JSON.parse(tmp[0]);
-					const combinaciones = JSON.parse(tmp[1]);
-					const producto = JSON.parse(tmp[2]);
-					const datos = JSON.parse(tmp[3]);
-					const detalles = JSON.parse(tmp[4]);
+				if(xhr.status == 200)
+				{
+					data = xhr.responseText.trim();
+					// console.log(data);
+					if(data < 0) {
+						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
+					} else {
+						
+						const tmp = data.split("::");
+						const variaciones = JSON.parse(tmp[0]);
+						const combinaciones = JSON.parse(tmp[1]);
+						const producto = JSON.parse(tmp[2]);
+						const datos = JSON.parse(tmp[3]);
+						const detalles = JSON.parse(tmp[4]);
 
-					let contenedorInventario = document.querySelector(`#pvariaciones-inventario`);
-					let contenidoInventario = "";
-					let inventario = "";
-					combinaciones.forEach((combinacion, ic) => {
+						let contenedorInventario = document.querySelector(`#pvariaciones-inventario`);
+						let contenidoInventario = "";
+						let tablaInventario = "";
 
 						// TODO: ESTABLECEMOS EL NOMBRE DE LA VARIACION
-						let pri_id = 0;
-						let nombre = "";
-						let precio = producto[0]['prd_precio'];
-						let cantidad = 10;
-						const tmpDetalles = combinacion.split(",");
-						tmpDetalles.forEach((tmpDetalle, i3) => {
-							detalles.forEach((detalle, i4) => {
-								if(parseInt(tmpDetalle) == parseInt(detalle['vrd_id'])) {
-									nombre = nombre + `${detalle['vrd_nombre']} `;
-								}
-							});
-						});
+						let checked = "";
+						let checkedAll = "";
+						if(datos == 0) {
+							combinaciones.forEach((combinacion, ic) => {
 
-						inventario = inventario + `
-						<tr>
-							<td>
-								<input type="hidden" name="pri_id[]" id="pri_id-${ic}" value="${pri_id}">
-								<input type="hidden" name="vrd_id[]" id="vrd_id-${ic}" value="${combinacion}">
-								${nombre}
-							</td>
-							<td>
-								<input type="text" name="price[]" id="price-${ic}" class="right-align" autocomplete="off" placeholder="" onkeyup="ajustar_valor(this)" value="${ajustarPrecio(precio)}">
-							</td>
-							<td>
-								<input type="hidden" name="stockBefore[]" id="stockBefore-${ic}" value="${cantidad}">
-								${cantidad}
-							</td>
-							<td>
-								<input type="number" name="stock[]" id="stock-${ic}" class="right-align" autocomplete="off" placeholder="" value="0">
-							</td>
-							<td>
-								<div class="switch custom-switch">
-									<label>
-										<input type="checkbox" name="visible[]" id="visible-${ic}" data-input="productos">
-										<span class="lever custom-leaver"></span>
-									</label>
-								</div>
-							</td>
-						</tr>`;
-					});
+								let nombre = "";
+								const tmpDetalles = combinacion.split(",");
+								tmpDetalles.forEach((tmpDetalle, i3) => {
+									detalles.forEach((detalle, i4) => {
+										if(parseInt(tmpDetalle) == parseInt(detalle['vrd_id'])) {
+											nombre = nombre + `${detalle['vrd_nombre']} `;
+										}
+									});
+								});
 
-					contenidoInventario = `
-					<form metod="POST" id="pvinventario_form">
-						<ul class="collapsible custom-collapsible" id="combinaciones-productos">
-							<li class="active">
-								<div class="collapsible-header">Inventario: </div>
-								<div class="collapsible-body">
-									<input type="hidden" name="prd_id" id="prd_id" value="${producto}">
-									<input type="hidden" name="var_id" id="var_id" value="${variaciones}">
-									<div class="row">
-										<div class="col s12 m2">
-											<input type="hidden" name="action" id="action" value="pviventario">
-											<button type="submit" id="action_pvinventario" class="btn waves-effect waves-light azulclaro">Guardar</button>
+								tablaInventario = tablaInventario + `
+								<tr>
+									<td>
+										<input type="hidden" name="pri_id[]" id="pri_id-${ic}" value="0">
+										<input type="hidden" name="vrd_id[]" id="vrd_id-${ic}" value="${combinacion}">
+										${nombre}
+									</td>
+									<td data-cell="price-${ic}">
+										${ajustarPrecio(producto[0]['prd_precio'])}
+									</td>
+									<td>
+										<input type="text" name="pricediff[]" id="price-${ic}" autocomplete="off" placeholder="" onkeyup="ajustar_valor(this); calcularDiff_precio(this, ${producto[0]['prd_precio']})" value="${ajustarPrecio(0)}">
+									</td>
+									<td>
+										<input type="hidden" name="stockBefore[]" id="stockBefore-${ic}" value="${producto[0]['pri_inventario']}">
+										${producto[0]['pri_inventario']}
+									</td>
+									<td>
+										<input type="number" name="stock[]" id="stock-${ic}" autocomplete="off" placeholder="" value="0">
+									</td>
+									<td>
+										<div class="switch custom-switch">
+											<label>
+												<input type="hidden" name="visible[]" id="visible-${ic}" value="0">
+												<input type="checkbox" name="visible[]" id="visible-${ic}" data-input="productos" value="1">
+												<span class="lever custom-leaver"></span>
+											</label>
 										</div>
-										<div class="col s6 m10">
-											<div class="var-actions">
-												<p>
-													<label>
-													<input type="checkbox" id="checked-all" onchange="checked_inputs(this, 'combinaciones-productos')" />
-													<span>Marcar</span>
-													</label>
-												</p>
+									</td>
+								</tr>`;
+							});
+						} else {
+							datos.forEach((inventario, ic) => {
+
+								let nombre = "";
+								const tmpDetalles = inventario['vrd_ids'].split(",");
+								tmpDetalles.forEach((tmpDetalle, i3) => {
+									detalles.forEach((detalle, i4) => {
+										if(parseInt(tmpDetalle) == parseInt(detalle['vrd_id'])) {
+											nombre = nombre + `${detalle['vrd_nombre']} `;
+										}
+									});
+								});
+
+								let activo = "";
+								if(inventario['pri_visible']) {
+									activo = "checked";
+									checked++;
+								}
+
+								tablaInventario = tablaInventario + `
+								<tr>
+									<td>
+										<input type="hidden" name="pri_id[]" id="pri_id-${ic}" value="${inventario['pri_id']}">
+										<input type="hidden" name="vrd_id[]" id="vrd_id-${ic}" value="${inventario['vrd_ids']}">
+										${nombre}
+									</td>
+									<td data-cell="price-${ic}">
+										${ajustarPrecio(producto[0]['prd_precio'])}
+									</td>
+									<td>
+										<input type="text" name="pricediff[]" id="price-${ic}" autocomplete="off" placeholder="" onkeyup="ajustar_valor(this); calcularDiff_precio(this, ${producto[0]['prd_precio']})" value="${ajustarPrecio(inventario['pri_preciodiferencia'])}">
+									</td>
+									<td>
+										<input type="hidden" name="stockBefore[]" id="stockBefore-${ic}" value="${inventario['pri_inventario']}">
+										${inventario['pri_inventario']}
+									</td>
+									<td>
+										<input type="number" name="stock[]" id="stock-${ic}" autocomplete="off" placeholder="" value="0">
+									</td>
+									<td>
+										<div class="switch custom-switch">
+											<label>
+												<input type="hidden" name="visible[]" id="visible-${ic}" value="0">
+												<input type="checkbox" name="visible[]" id="visible-${ic}" data-input="productos" ${activo} value="1">
+												<span class="lever custom-leaver"></span>
+											</label>
+										</div>
+									</td>
+								</tr>`;
+							});
+
+							checkedAll = checked == datos.length ? "checked" : "";
+						}
+
+
+						contenidoInventario = `
+						<form metod="POST" id="pvinventario_form">
+							<ul class="collapsible custom-collapsible" id="combinaciones-productos">
+								<li class="active">
+									<div class="collapsible-header">Inventario: </div>
+									<div class="collapsible-body">
+										<input type="hidden" name="prd_id" id="prd_id" value="${idProducto}">
+										<input type="hidden" name="var_ids" id="var_ids" value="${variaciones}">
+										<div class="row">
+											<div class="col s12 m2">
+												<input type="hidden" name="action" id="action" value="pviventario">
+												<button type="submit" id="action_pvinventario" class="btn waves-effect waves-light azulclaro">Guardar</button>
+											</div>
+											<div class="col s6 m10">
+												<div class="var-actions">
+													<p>
+														<label>
+														<input type="checkbox" id="checked-all" onchange="checked_inputs(this, 'combinaciones-productos')" ${checkedAll}/>
+														<span>Marcar</span>
+														</label>
+													</p>
+												</div>
+											</div>
+											<div class="col s12 m12 mb-20">
+												<i>La cantidad se suamara a la cantidad actual del producto.</i>
+											</div>
+											<div class="col s12 m12">
+												<table class="custom-table">
+													<thead>
+														<tr>
+															<th class="table-30">Variacion</th>
+															<th class="table-10">Precio</th>
+															<th class="table-15">Diferencia de precio</th>
+															<th class="table-15">Cantidad Actual</th>
+															<th class="table-15">Cantidad</th>
+															<th class="table-15">Mostrar</th>
+														</tr>
+													</thead>
+													<tbody>
+														${tablaInventario}
+													</tbody>
+												</table>
 											</div>
 										</div>
-										<div class="col s12 m12">
-											<table class="custom-table">
-												<thead>
-													<tr>
-														<th class="table-20">Variacion</th>
-														<th class="table-20">Precio</th>
-														<th class="table-20">Stock Actual</th>
-														<th class="table-20">Stock</th>
-														<th class="table-20">Mostrar</th>
-													</tr>
-												</thead>
-												<tbody>
-													${inventario}
-												</tbody>
-											</table>
-										</div>
 									</div>
-								</div>
-							</li>
-						</ul>
-					</form>`;
+								</li>
+							</ul>
+						</form>`;
 
-					contenedorInventario.innerHTML = contenidoInventario;
-					$('.collapsible').collapsible();
-					cmp.disabled = false;
-					cmp.checked = true;
+						contenedorInventario.innerHTML = contenidoInventario;
+						$('.collapsible').collapsible();
+						cmp.disabled = false;
+						cmp.checked = true;
 
-					M.updateTextFields();
-					validacion_pvinventario();
-
+						M.updateTextFields();
+						validacion_pvinventario('', idProducto);
+					}
+		
+				} else {
+					M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
 				}
-	
-			} else {
-				M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
 			}
 		}
+
+	} else {
+		
+		cmp.checked = true;
+		Swal.fire({
+			title: "¿Estás seguro de reestablecer el inventario?",
+			text:  "Cualquier cambio que hayas realizado se restablecerá a los valores originales.",
+			icon: "error",
+			showCancelButton: true,
+			confirmButtonColor: '#19a0c9',
+			cancelButtonColor: '#003359',
+			confirmButtonText: "Confirmar",
+			cancelButtonText: "Cancelar",
+			reverseButtons: true
+		}).then((result) => {
+
+			if(result.isConfirmed) {
+
+				var xhr = new XMLHttpRequest();
+				var params 	= `producto=${idProducto}&action=eliminar_inventario`;
+				xhr.open("POST", `inc/pvariaciones.php`,true);
+				xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				xhr.send(params);
+				xhr.onreadystatechange = function()
+				{
+					if(xhr.readyState == 4)
+					{
+						if(xhr.status == 200)
+						{
+							data = xhr.responseText.trim();
+							console.log(data);
+							if(data < 0) {
+								M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
+							} else {
+								let contenedorInventario = document.querySelector(`#pvariaciones-inventario`);
+								contenedorInventario.innerHTML = "";
+								cmp.checked = false;
+							}
+				
+						} else {
+							M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
+						}
+					}
+				}
+
+			}
+
+		});
 	}
 }
 
@@ -1237,4 +1355,14 @@ const checked_inputs = (cmp, seccion) => {
 			}			
 		}	
 	}
+}
+
+// TODO: calcular diferencia de precio
+const calcularDiff_precio = (input, precio) => {
+
+	const idInput = input.id;
+	const diferencia = input.value == "" ? 0 : desajustar_valor(input.value).trim();
+	const nuevoPrecio = parseFloat(precio) + parseFloat(diferencia);
+	const precioContainer = document.querySelector(`[data-cell="${idInput}"]`);
+	precioContainer.innerHTML = ajustarPrecio(nuevoPrecio);
 }

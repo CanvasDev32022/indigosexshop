@@ -12,7 +12,10 @@
 
 #Archivos
 uploads/productos/*
-!uploads/productos/.gitkeep
+!uploads/productos/seo/
+
+uploads/productos/seo/*
+!uploads/productos/seo/.gitkeep
 
 uploads/archivos/*
 !uploads/archivos/.gitkeep
