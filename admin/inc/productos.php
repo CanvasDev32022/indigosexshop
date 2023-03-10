@@ -74,6 +74,7 @@
 	elseif($_POST['action'] == "crear")
 	{
 		$ruta = "../../uploads/productos/";
+		$ruta_seo = "../../uploads/productos/seo/";
 		$ruta_tmp = "../../uploads/archivos/";
 		if($_POST['archivos_input-0'] != "") {
 
@@ -132,13 +133,13 @@
 				$extension = explode("/", $tmp_extension)[1];
 				$nombre = $tools->getCode(20).$hora;
 				$prd_metaimagena = $nombre.".".$extension;
-				move_uploaded_file($_FILES['prd_metaimagena']['tmp_name'], $ruta.$prd_metaimagena);
+				move_uploaded_file($_FILES['prd_metaimagena']['tmp_name'], $ruta_seo.$prd_metaimagena);
 
 				// TODO: Verificamos que la imagen no supere el tamaño máximo
-				$size = getimagesize($ruta.$prd_metaimagena);
+				$size = getimagesize($ruta_seo.$prd_metaimagena);
 				if($size > $cms_image_width['imagenc']['imagen'])
 					// TODO: Redimensionamos la imagen y generamos el imagen
-					$tools->imageResize($ruta, $prd_metaimagena, $cms_image_width['imagenc']['imagen']);
+					$tools->imageResize($ruta_seo, $prd_metaimagena, $cms_image_width['imagenc']['imagen']);
 				else
 					// TODO: Creamos la imagen WEBP
 					$tools->img2webp($prd_metaimagena, $nombre.".webp");
@@ -155,13 +156,13 @@
 				$extension = explode("/", $tmp_extension)[1];
 				$nombre = $tools->getCode(20).$hora;
 				$prd_metaimagenb = $nombre.".".$extension;
-				move_uploaded_file($_FILES['prd_metaimagenb']['tmp_name'], $ruta.$prd_metaimagenb);
+				move_uploaded_file($_FILES['prd_metaimagenb']['tmp_name'], $ruta_seo.$prd_metaimagenb);
 
 				// TODO: Verificamos que la imagen no supere el tamaño máximo
-				$size = getimagesize($ruta.$prd_metaimagenb);
+				$size = getimagesize($ruta_seo.$prd_metaimagenb);
 				if($size > $cms_image_width['imagend']['imagen'])
 					// TODO: Redimensionamos la imagen y generamos el imagen
-					$tools->imageResize($ruta, $prd_metaimagenb, $cms_image_width['imagend']['imagen']);
+					$tools->imageResize($ruta_seo, $prd_metaimagenb, $cms_image_width['imagend']['imagen']);
 				else
 					// TODO: Creamos la imagen WEBP
 					$tools->img2webp($prd_metaimagenb, $nombre.".webp");
@@ -212,12 +213,41 @@
 			];
 			$types = ['s','s','s','s','i','i','s','d','i','d','d','i','i','i','i','s','i','s','s','s','s','s','s','s'];
 			$prdI = $toolSQL->insertSQL($prepare, $types, $params);
-			echo $prdI;
+			if($prdI < 0) {
+				echo -2;
+			} else {
+
+				$nombre = $_POST['prd_nombre'];
+				$prepare = "SELECT prd_id FROM productos WHERE prd_nombre = ? AND prd_creado = ?";
+				$params = [$nombre, $creado];
+				$types = ['s','s'];
+				$prdS = $toolSQL->selectSQL($prepare, $types, $params);
+				if($prdS <= 0) {
+					echo -3;
+				} else {
+
+					$prd_id = $prdS[0]['prd_id'];
+					$prepare = "INSERT INTO productos_inventario (prd_id, vrd_ids, pri_inventario, pri_creado) VALUES (?,?,?,?)";
+					$params = [
+						intval($prd_id),
+						'0',
+						$_POST['pri_inventario'],
+						$creado
+					];
+					$types = ['i','s','s','s'];
+					$priI = $toolSQL->insertSQL($prepare, $types, $params);
+					echo $priI;
+				}
+			}
 		}
 	}
 	elseif($_POST['action'] == "obtener_editar")
 	{
-		$prepare = "SELECT prd_id, prd_imagen, prd_nombre, prd_descripcion_corta, prd_descripcion_larga, prt_id, prd_visible, pct_ids, prd_precio, prd_promocion, prd_porcentajepromocion, prd_preciopromocion, prs_id, prd_destacado, prd_nuevo, prd_vendido, prd_referencia, prd_padre, prd_relacionado, prd_metatitulo, prd_metadescripcion, prd_metakeywords, prd_metaimagenc, prd_metaimagend FROM productos WHERE prd_id = ?";
+		$prepare = "
+			SELECT prd.prd_id, prd_imagen, prd_nombre, prd_descripcion_corta, prd_descripcion_larga, prt_id, prd_visible, prd.vrd_ids, pct_ids, prd_precio, prd_promocion, prd_porcentajepromocion, prd_preciopromocion, prs_id, prd_destacado, prd_nuevo, prd_vendido, prd_referencia, prd_padre, prd_relacionado, prd_metatitulo, prd_metadescripcion, prd_metakeywords, prd_metaimagenc, prd_metaimagend, pri.pri_inventario
+			FROM productos prd
+			INNER JOIN productos_inventario pri ON(pri.prd_id = prd.prd_id)
+			WHERE prd.prd_id = ? AND pri.vrd_ids = 0";
 		$params = [intval($_POST['id'])];
 		$types = ['i'];
 		$prdS = $toolSQL->selectSQL($prepare, $types, $params);
@@ -247,6 +277,7 @@
 	elseif($_POST['action'] == "editar")
 	{
 		$ruta = "../../uploads/productos/";
+		$ruta_seo = "../../uploads/productos/seo/";
 		$ruta_tmp = "../../uploads/archivos/";
 		$prepare = "SELECT prd_id, prd_imagen, prd_metaimagenc, prd_metaimagend FROM productos WHERE prd_id = ?";
 		$params = [intval($_POST['prd_id'])];
@@ -362,8 +393,8 @@
 						if($prdS[0]['prd_metaimagenc'] != "")
 						{
 							$webp = explode(".", $prdS[0]['prd_metaimagenc']);
-							unlink($ruta.$prdS[0]['prd_metaimagenc']);
-							unlink($ruta.$webp[0].".webp");
+							unlink($ruta_seo.$prdS[0]['prd_metaimagenc']);
+							unlink($ruta_seo.$webp[0].".webp");
 						}
 						
 						$prd_metaimagena = "";
@@ -377,8 +408,8 @@
 					if($prdS[0]['prd_metaimagenc'] != "") {
 
 						$webp = explode(".", $prdS[0]['prd_metaimagenc']);
-						unlink($ruta.$prdS[0]['prd_metaimagenc']);
-						unlink($ruta.$webp[0].".webp");
+						unlink($ruta_seo.$prdS[0]['prd_metaimagenc']);
+						unlink($ruta_seo.$webp[0].".webp");
 					}
 
 					$prd_metaimagena = "";
@@ -386,13 +417,13 @@
 					$extension = explode("/", $tmp_extension)[1];
 					$nombre = $tools->getCode(20).$hora;
 					$prd_metaimagena = $nombre.".".$extension;
-					move_uploaded_file($_FILES['prd_metaimagena']['tmp_name'], $ruta.$prd_metaimagena);
+					move_uploaded_file($_FILES['prd_metaimagena']['tmp_name'], $ruta_seo.$prd_metaimagena);
 
 					// TODO: Verificamos que la imagen no supere el tamaño máximo
-					$size = getimagesize($ruta.$prd_metaimagena);
+					$size = getimagesize($ruta_seo.$prd_metaimagena);
 					if($size > $cms_image_width['imagenc']['imagen'])
 						// TODO: Redimensionamos la imagen y generamos el imagen
-						$tools->imageResize($ruta, $prd_metaimagena, $cms_image_width['imagenc']['imagen']);
+						$tools->imageResize($ruta_seo, $prd_metaimagena, $cms_image_width['imagenc']['imagen']);
 					else
 						// TODO: Creamos la imagen WEBP
 						$tools->img2webp($prd_metaimagena, $nombre.".webp");
@@ -407,8 +438,8 @@
 						if($prdS[0]['prd_metaimagend'] != "")
 						{
 							$webp = explode(".", $prdS[0]['prd_metaimagend']);
-							unlink($ruta.$prdS[0]['prd_metaimagend']);
-							unlink($ruta.$webp[0].".webp");
+							unlink($ruta_seo.$prdS[0]['prd_metaimagend']);
+							unlink($ruta_seo.$webp[0].".webp");
 						}
 						
 						$prd_metaimagenb = "";
@@ -422,8 +453,8 @@
 					if($prdS[0]['prd_metaimagend'] != "") {
 
 						$webp = explode(".", $prdS[0]['prd_metaimagend']);
-						unlink($ruta.$prdS[0]['prd_metaimagend']);
-						unlink($ruta.$webp[0].".webp");
+						unlink($ruta_seo.$prdS[0]['prd_metaimagend']);
+						unlink($ruta_seo.$webp[0].".webp");
 					}
 					
 					$prd_metaimagenb = "";
@@ -431,13 +462,13 @@
 					$extension = explode("/", $tmp_extension)[1];
 					$nombre = $tools->getCode(20).$hora;
 					$prd_metaimagenb = $nombre.".".$extension;
-					move_uploaded_file($_FILES['prd_metaimagenb']['tmp_name'], $ruta.$prd_metaimagenb);
+					move_uploaded_file($_FILES['prd_metaimagenb']['tmp_name'], $ruta_seo.$prd_metaimagenb);
 
 					// TODO: Verificamos que la imagen no supere el tamaño máximo
-					$size = getimagesize($ruta.$prd_metaimagenb);
+					$size = getimagesize($ruta_seo.$prd_metaimagenb);
 					if($size > $cms_image_width['imagend']['imagen'])
 						// TODO: Redimensionamos la imagen y generamos el imagen
-						$tools->imageResize($ruta, $prd_metaimagenb, $cms_image_width['imagend']['imagen']);
+						$tools->imageResize($ruta_seo, $prd_metaimagenb, $cms_image_width['imagend']['imagen']);
 					else
 						// TODO: Creamos la imagen WEBP
 						$tools->img2webp($prd_metaimagenb, $nombre.".webp");
@@ -485,8 +516,36 @@
 				];
 				$types = ['s','s','s','s','i','i','s','d','i','d','d','i','i','i','i','s','i','s','s','s','s','s','s','i'];
 				$prdU = $toolSQL->updateSQL($prepare, $types, $params);
-				echo $prdU;
+				if($prdU < 0) {
+					echo -3;
+				} else {
 
+					if(isset($_POST['pri_inventario'])) {
+
+						$prepare = "SELECT pri_id, pri_inventario FROM productos_inventario WHERE prd_id = ? AND vrd_ids = 0";
+						$params = [intval($_POST['prd_id'])];
+						$types = ['i'];
+						$priS = $toolSQL->selectSQL($prepare, $types, $params);
+						if($priS <= 0) {
+							echo -4;
+						} else {
+
+							$pri_id = $priS[0]['pri_id'];
+							$cantidadInventario = $priS[0]['pri_inventario'] + $_POST['pri_inventario'];
+							$prepare = "UPDATE productos_inventario SET pri_inventario = ? WHERE pri_id = ?";
+							$params = [
+								intval($cantidadInventario),
+								intval($pri_id)
+							];
+							$types = ['i','i'];
+							$priU = $toolSQL->updateSQL($prepare, $types, $params);
+							echo $priU;
+						}
+
+					} else {
+						echo $prdU;
+					}
+				}
 			}
 		}
 	}
