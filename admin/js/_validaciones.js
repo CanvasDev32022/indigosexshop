@@ -505,6 +505,56 @@ const validacion_pvinventario = (seccion, producto) => {
 	});
 }
 
+// TODO: VALIDACION GALERIA VARIACIONES DE PRODUCTO
+const validacion_pvgaleria = (seccion) => {
+
+	const seccion_singular = "pvariacion";
+	const seccion_legible = "Variante";
+
+	const formulario = document.querySelector(`#${seccion_singular}_galeria`);
+	formulario.addEventListener("submit", (e) => {
+		e.preventDefault();
+
+		const boton = document.querySelector(`#action_galeria`);
+		boton.disabled = true;
+
+		const respuesta = validar_formulario(validacionesGlobal, false);
+		if(respuesta) {
+
+			const xhr = new XMLHttpRequest();
+			let params = new FormData(formulario);
+			xhr.addEventListener("error", errorHandler, false);
+			xhr.addEventListener("abort", abortHandler, false);
+			xhr.open('POST', `inc/${seccion}.php`,true);
+			xhr.send(params);
+			xhr.onreadystatechange = function()
+			{
+				if(xhr.readyState == 4)
+				{
+					if(xhr.status == 200)
+					{
+						data = xhr.responseText.trim();
+						console.log(data);
+						if(data < 0) {
+							M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: data`, classes: 'toasterror'});
+						} else {
+							$(`#modal-auxiliar1`).modal('close');
+							formulario.innerHTML = "";
+						}
+			
+					} else {
+						M.toast({html: `Ha ocurrido un error, verifique su conexión a Internet`, classes: 'toasterror'});
+					}
+					boton.disabled = false;
+				}
+			}
+
+		} else {
+			boton.disabled = false;
+		}
+	});
+}
+
 // TODO: funciones de error par FORM DATA
 function errorHandler(event) {
 	app.toast.show({text: 'Ha ocurrido un error. Intente de nuevo.',closeTimeout: 2000, cssClass: 'toasterror'});

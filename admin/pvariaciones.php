@@ -12,7 +12,7 @@
 </div>
 <div id="modal-pvariaciones" class="modal modal-meddium modal-fixed-footer"></div>
 <div id="modal-archivos" class="modal modal-small modal-fixed-footer"></div>
-<div id="modal-auxiliar1" class="modal modal-full modal-fixed-footer"></div>
+<div id="modal-auxiliar1" class="modal modal-small modal-fixed-footer"></div>
 <div id="modal-auxiliar2" class="modal modal-full modal-fixed-footer"></div>
 
 <?php

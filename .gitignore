@@ -13,9 +13,13 @@
 #Archivos
 uploads/productos/*
 !uploads/productos/seo/
+!uploads/productos/galeria/
 
 uploads/productos/seo/*
 !uploads/productos/seo/.gitkeep
+
+uploads/productos/galeria/*
+!uploads/productos/galeria/.gitkeep
 
 uploads/archivos/*
 !uploads/archivos/.gitkeep

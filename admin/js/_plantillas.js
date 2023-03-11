@@ -1528,11 +1528,11 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 								}
 
 								contenidoVariaciones = contenidoVariaciones + `
-								<li class="collection-item custom-collection">
-									<div class="collection-head">
+								<li class="collection-item custom-collection" style="cursor: pointer;">
+									<div class="collection-head" onclick="plantillas('${seccion_singular}_galeria', '')">
 										${dato['var_nombre']}
 									</div>
-									<div class="collection-body">
+									<div class="collection-body" onclick="plantillas('${seccion_singular}_galeria', '')">
 										${contenidoDetalles}
 									</div>
 									<div class="collection-actions right-align">
@@ -1595,18 +1595,6 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 								agregarInventarioVariante(checkedVariaciones, prd_id)
 							}
 						}
-
-						const coleciones = cmp.querySelectorAll(`li[class="collection-item custom-collection"]`);
-						if(coleciones.length > 0) {
-							for (var i = 0; i < coleciones.length; i++) {
-
-								coleciones[i].style.cursor = "pointer";
-								coleciones[i].addEventListener("click", (e) => {
-									plantillas(`${seccion_singular}_galeria`, '');
-								});
-							}
-						}
-
 					}
 		
 				} else {
@@ -1865,7 +1853,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 		const seccion_singular = "pvariacion";
 		const seccion_legible = "Variante";
 
-		const modal = document.getElementById(`modal-archivos`);
+		const modal = document.getElementById(`modal-auxiliar1`);
 		modal.innerHTML = loaderComponent();
 
 		const producto = getUrlParam('c');
@@ -1881,19 +1869,25 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 				if(xhr.status == 200)
 				{
 					data = xhr.responseText.trim();
-					console.log(data);
+					// console.log(data);
 					if(data < 0) {
-						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: data`, classes: 'toasterror'});
+						M.toast({html: `Ha ocurrido un error. Por favor, intente de nuevo. Código: ${data}`, classes: 'toasterror'});
 						$(modal).modal('close');
 					} else {
 						
 						const tmp = data.split("::");
-						const variantes = JSON.parse(tmp[0]);
+						const datos = JSON.parse(tmp[0]);
+						const variantes = JSON.parse(tmp[1]);
+						const detalles = JSON.parse(tmp[2]);
+						variacionesGlobal = detalles;
 
-						console.log(variantes);
+						let optionVariaciones = "";
+						for (variante of variantes) {
+							optionVariaciones = optionVariaciones + `<option value="${variante['var_id']}">${variante['var_nombre']}</option>`;
+						}
 
 						modal.innerHTML = `
-						<form method="POST" id="${seccion_singular}_form">
+						<form method="POST" id="${seccion_singular}_galeria">
 							<div id="breadcrumbs-wrapper" class="breadcrumbs-bg-image">
 								<div class="container mt-0">
 									<div class="row mb-0">
@@ -1906,9 +1900,21 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							</div>
 							<div class="modal-content">
 								<div class="panel">
+									<input type="hidden" name="prd_id" id="prd_id" value="${producto}">
 									<div class="row">
 										<div class="col s12 m12 mb-20">
 											<i>Selecciona una variante y administra la galería que deseas que los clientes vean.</i>
+										</div>
+										<div class="col s12 m6">
+											<select name="var_id" data-select="var_id">
+												<option value="" selected>Seleccione una opción</option>
+												${optionVariaciones}
+											</select>
+											<div class="form-error" data-field="var_id"></div>
+										</div>
+										<div class="col s12 m12">
+											<ul class="collapsible custom-collapsible" id="galeria-container">
+											</ul>
 										</div>
 									</div>
 								</div>
@@ -1916,14 +1922,46 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							<div class="modal-footer">
 								<div class="row m-0">
 									<div class="col s12 m4 offset-m8">
-										<input type="hidden" name="action" id="action" value="crear">
-										<button type="submit" id="action_${seccion_singular}" class="btn waves-effect waves-light azulclaro">Guardar</button>
+										<input type="hidden" name="action" id="action" value="galeria">
+										<button type="submit" id="action_galeria" class="btn waves-effect waves-light azulclaro">Guardar</button>
 									</div>
 								</div>
 							</div>
 						</form>`;
 
-						
+						let var_id = datos != "" ? datos[0]['var_id'] : 0;
+						const $variantes = $('[data-select="var_id"]').selectize({
+							onChange: (value) => {
+
+								if(value != "") {
+
+									const cmp = document.querySelector('#galeria-container');
+									cmp.innerHTML = "";
+									if(datos != "" && parseInt(value) == datos[0]['var_id']) {
+
+										for (var i = 0; i < datos.length; i++) {
+											if(datos[i]['var_id'] == parseInt(value)) {
+												galeriaVarianteDatos(i, datos[i]);
+											}
+										}
+									} else {
+										
+										for (var i = 0; i < variantes.length; i++) {
+											if(variantes[i]['var_id'] == parseInt(value)) {
+												console.log(variantes[i]);
+												galeriaVariante(variante['var_id'], variante['vrd_ids']);
+											}
+										}
+									}
+								}
+							}
+						});
+						const control = $variantes[0].selectize;
+						control.setValue(var_id);
+						$('.collapsible').collapsible();
+
+						M.updateTextFields();
+						validacion_pvgaleria(modulo);
 					}
 		
 				} else {
