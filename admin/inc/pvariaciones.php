@@ -753,16 +753,163 @@
 			echo $priD;
 		}
 	}
-	elseif($_POST['action'] == "obtener_galeria") {
-
-		$prepare = "SELECT prd_id, var_id, vrd_ids FROM productos_variaciones WHERE prd_id = ?";
+	elseif($_POST['action'] == "obtener_galeria") 
+	{
+		$prepare = "SELECT prg_id, vrd.var_id, prg.vrd_id, vrd.vrd_nombre, prg_galeria FROM productos_galeria prg INNER JOIN variaciones_detalles vrd ON(vrd.vrd_id = prg.vrd_id) WHERE prd_id = ?";
 		$params = [intval($_POST['producto'])];
 		$types = ['i'];
-		$prvS = $toolSQL->selectSQL($prepare, $types, $params);
-		if($prvS <= 0) {
+		$prgS = $toolSQL->selectSQL($prepare, $types, $params);
+		if($prgS < 0) {
 			echo -1;
 		} else {
-			echo json_encode($prvS);
+
+			$prepare = "SELECT prd_id, prv.var_id, vrd_ids, var.var_nombre FROM productos_variaciones prv INNER JOIN variaciones var ON(var.var_id = prv.var_id) WHERE prd_id = ? AND prv_borrado = 0";
+			$params = [intval($_POST['producto'])];
+			$types = ['i'];
+			$prvS = $toolSQL->selectSQL($prepare, $types, $params);
+			if($prvS <= 0) {
+				echo -1;
+			} else {
+
+				$prepare = "SELECT vrd_id, var_id, vrd_nombre FROM variaciones_detalles WHERE ? ORDER BY vrd_nombre ASC";
+				$params = [1];
+				$types = ['i'];
+				$vrdS = $toolSQL->selectSQL($prepare, $types, $params);
+				if($vrdS < 0) {
+					 echo -2;
+				} else {
+					echo json_encode($prgS)."::".json_encode($prvS)."::".json_encode($vrdS);
+				}
+			}
 		}
-	};
+	}
+	elseif($_POST['action'] == "galeria") 
+	{
+		$ruta = "../../uploads/productos/galeria/";
+		$ruta_tmp = "../../uploads/archivos/";
+		$prepare = "SELECT prg_id, vrd_id, prg_galeria FROM productos_galeria WHERE prd_id = ?";
+		$params = [intval($_POST['prd_id'])];
+		$types = ['i'];
+		$prgS = $toolSQL->selectSQL($prepare, $types, $params);
+		if($prgS < 0) 
+			echo -1;
+		else
+		{
+			$prepare = "SELECT vrd_id FROM variaciones_detalles WHERE ? ORDER BY var_id ASC";
+			$params = [1];
+			$types = ['i'];
+			$vrdS = $toolSQL->selectSQL($prepare, $types, $params);
+
+			if($prgS == 0) {
+				
+				foreach ($vrdS as $keyV => $variacion) {
+					
+					if(isset($_POST['archivos_input-'.$variacion['vrd_id']])) {
+
+						if($_POST['archivos_input-'.$variacion['vrd_id']] != "") {
+							$archivos = explode(";;", $_POST['archivos_input-'.$variacion['vrd_id']]);
+							foreach ($archivos as $key => $arc) {
+								$archivo = explode("||", $arc);
+								$webp = explode(".", $archivo[1]);
+								rename($ruta_tmp.$archivo[1], $ruta.$archivo[1]);	
+								rename($ruta_tmp.$webp[0].".webp", $ruta.$webp[0].".webp");	
+							}
+						}
+
+						$prepare = "INSERT INTO productos_galeria (prd_id, vrd_id, prg_galeria, prg_creado) VALUES (?,?,?,?)";
+						$params = [
+							intval($_POST['prd_id']),
+							intval($variacion['vrd_id']),
+							$_POST['archivos_input-'.$variacion['vrd_id']],
+							$creado
+						];
+						$types = ['i','i','s','s'];
+						$prgI = $toolSQL->insertSQL($prepare, $types, $params);
+						if($prgI < 0) {
+							echo -3;
+							exit;
+						}
+					}
+				}
+
+			} else {
+
+				foreach ($prgS as $key => $galeria) {
+					
+					// TODO: GALERIA
+					$archivosFRONT 	= $_POST['archivos_input-'.$galeria['vrd_id']] 	!= "" 	? explode(";;", $_POST['archivos_input-'.$galeria['vrd_id']]) : [];
+					$archivosDB 	= $galeria['prg_galeria'] 	!= ""	? explode(";;", $galeria['prg_galeria']) : [];
+
+					$archivosMOVE = [];
+					$archivosDEL = [];
+
+					// TODO: VERIFICACION DE LA GALERIA
+					if(count($archivosFRONT) > 0) {
+
+						if(count($archivosDB) > 0) {
+
+							foreach ($archivosFRONT as $keyF => $archivoF) {
+								
+								$index = array_search($archivoF, $archivosDB);
+								if($index === false) {
+									array_push($archivosMOVE, $archivoF);
+								}
+							}
+
+							foreach ($archivosDB as $keyD => $archivoD) {
+
+								$index = array_search($archivoD, $archivosFRONT);
+								if($index === false) {
+									array_push($archivosDEL, $archivoD);
+								}
+							}
+
+						} else {
+							$archivosMOVE = $archivosFRONT;
+						}
+
+					} else {
+						$archivosDEL = $archivosDB;
+					}
+
+
+					if(count($archivosMOVE) > 0) {
+
+						// TODO: MOVEMOS LOS ARCHIVOS
+						foreach ($archivosMOVE as $arcM) {
+							$mover = explode("||", $arcM);
+							$webp = explode(".", $mover[1]);
+							rename($ruta_tmp.$mover[1], $ruta.$mover[1]);
+							rename($ruta_tmp.$webp[0].".webp", $ruta.$webp[0].".webp");
+						}
+					}
+
+					if(count($archivosDEL) > 0) {
+
+						// TODO: ELIMINARMOS LOS ARCHIVOS
+						foreach ($archivosDEL as $arcD) {
+							$eliminar = explode("||", $arcD);
+							$webp = explode(".", $eliminar[1]);
+							unlink($ruta.$eliminar[1]);
+							unlink($ruta.$webp[0].".webp");
+						}
+					}
+
+					$prepare = "UPDATE productos_galeria SET  prg_galeria = ? WHERE prg_id = ?";
+					$params = [
+						$_POST['archivos_input-'.$galeria['vrd_id']],
+						intval($galeria['prg_id'])
+					];
+					$types = ['s','i'];
+					$prgU = $toolSQL->updateSQL($prepare, $types, $params);
+					if($prgU < 0) {
+						echo -3;
+						exit;
+					}
+				}
+
+			}
+			echo 1;
+		}
+	}
 ?>

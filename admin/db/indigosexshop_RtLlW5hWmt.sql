@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost:3306
--- Tiempo de generación: 08-03-2023 a las 22:12:02
+-- Tiempo de generación: 11-03-2023 a las 17:59:02
 -- Versión del servidor: 8.0.30
 -- Versión de PHP: 7.4.33
 
@@ -312,6 +312,21 @@ CREATE TABLE `productos_categorias` (
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `productos_galeria`
+--
+
+CREATE TABLE `productos_galeria` (
+  `prg_id` int NOT NULL,
+  `prd_id` int NOT NULL,
+  `vrd_id` int NOT NULL,
+  `prg_galeria` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `prg_modificado` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `prg_creado` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `productos_inventario`
 --
 
@@ -320,6 +335,8 @@ CREATE TABLE `productos_inventario` (
   `prd_id` int NOT NULL,
   `vrd_ids` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `pri_inventario` int NOT NULL,
+  `pri_preciodiferencia` double NOT NULL,
+  `pri_visible` tinyint(1) NOT NULL,
   `pri_borrado` tinyint(1) NOT NULL,
   `pri_modificado` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `pri_creado` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -428,7 +445,8 @@ CREATE TABLE `variaciones` (
 
 INSERT INTO `variaciones` (`var_id`, `var_nombre`, `var_tipo`, `var_borrado`, `var_modificado`, `var_creado`) VALUES
 (1, 'Tallas', 1, 0, '2023-02-13 17:05:09', '2023-02-13 17:05:09'),
-(2, 'Color', 2, 0, '2023-02-13 17:05:09', '2023-02-13 17:05:09');
+(2, 'Color', 2, 0, '2023-02-13 17:05:09', '2023-02-13 17:05:09'),
+(3, 'Sabores', 1, 0, '2023-03-09 15:10:40', '2023-03-09 15:10:40');
 
 -- --------------------------------------------------------
 
@@ -461,7 +479,12 @@ INSERT INTO `variaciones_detalles` (`vrd_id`, `var_id`, `vrd_nombre`, `vrd_color
 (8, 2, 'Azul', '#26204c', 0, '2023-02-13 17:09:50', '2023-02-13 17:09:50'),
 (9, 2, 'Rojo', '#9c2229', 0, '2023-02-13 17:09:50', '2023-02-13 17:09:50'),
 (10, 2, 'Negro', '#141319', 0, '2023-02-13 17:09:50', '2023-02-13 17:09:50'),
-(11, 2, 'Blanco', '#cad4d6', 0, '2023-02-13 17:09:50', '2023-02-13 17:09:50');
+(11, 2, 'Blanco', '#cad4d6', 0, '2023-02-13 17:09:50', '2023-02-13 17:09:50'),
+(12, 3, 'Iris Cream', '', 0, '2023-03-09 15:12:41', '2023-03-09 15:12:41'),
+(13, 3, 'Mojito', '', 0, '2023-03-09 15:12:41', '2023-03-09 15:12:41'),
+(14, 3, 'Vino Pasión', '', 0, '2023-03-09 15:12:41', '2023-03-09 15:12:41'),
+(15, 3, 'Coco Vainilla', '', 0, '2023-03-09 15:12:41', '2023-03-09 15:12:41'),
+(16, 3, 'Fresa', '', 0, '2023-03-09 15:12:41', '2023-03-09 15:12:41');
 
 -- --------------------------------------------------------
 
@@ -669,6 +692,12 @@ ALTER TABLE `productos_categorias`
   ADD PRIMARY KEY (`pct_id`);
 
 --
+-- Indices de la tabla `productos_galeria`
+--
+ALTER TABLE `productos_galeria`
+  ADD PRIMARY KEY (`prg_id`);
+
+--
 -- Indices de la tabla `productos_inventario`
 --
 ALTER TABLE `productos_inventario`
@@ -841,6 +870,12 @@ ALTER TABLE `productos_categorias`
   MODIFY `pct_id` int NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `productos_galeria`
+--
+ALTER TABLE `productos_galeria`
+  MODIFY `prg_id` int NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `productos_inventario`
 --
 ALTER TABLE `productos_inventario`
@@ -874,13 +909,13 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `variaciones`
 --
 ALTER TABLE `variaciones`
-  MODIFY `var_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `var_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `variaciones_detalles`
 --
 ALTER TABLE `variaciones_detalles`
-  MODIFY `vrd_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `vrd_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de la tabla `_boolean`
