@@ -1537,7 +1537,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 									</div>
 									<div class="collection-actions right-align">
 										<a onclick="plantillas('${seccion_singular}_editar','', '', '${pagina}','${busqueda}',${dato['prv_id']})" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Editar ${seccion_legible}"><i class="material-icons">edit</i></a>
-										<a onclick="eliminar_variacion(${dato['prv_id']}, '${modulo}', '${rol}', ${prd_id})" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar ${seccion_legible}"><i class="material-icons">delete</i></a>
+										<a onclick="eliminar_variacion(${dato['prv_id']}, '${modulo}', '${rol}', ${prd_id}, ${dato['var_id']})" class="btn-floating btn-small btn-xs waves-effect waves-light outline-blue" title="Eliminar ${seccion_legible}"><i class="material-icons">delete</i></a>
 									</div>
 								</li>`;
 							});
@@ -1876,15 +1876,23 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 					} else {
 						
 						const tmp = data.split("::");
-						const datos = JSON.parse(tmp[0]);
-						const variantes = JSON.parse(tmp[1]);
+						const pvariantes = JSON.parse(tmp[0]);
+						const datos = JSON.parse(tmp[1]);
 						const detalles = JSON.parse(tmp[2]);
-						variacionesGlobal = detalles;
 
+						let opcionesActivas = "";
 						let optionVariaciones = "";
-						for (variante of variantes) {
-							optionVariaciones = optionVariaciones + `<option value="${variante['var_id']}">${variante['var_nombre']}</option>`;
+						for (variante of pvariantes) {
+							let selected = "";
+							if(datos[0]['var_id'] == variante['var_id']) {
+
+								selected = "selected";
+								opcionesActivas = variante['vrd_ids'].split(",");
+							}
+							optionVariaciones = optionVariaciones + `<option value="${variante['var_id']}" ${selected}>${variante['var_nombre']}</option>`;
 						}
+
+						let contenidoGaleria = cargarGaleriaVariantes(datos, opcionesActivas, detalles);
 
 						modal.innerHTML = `
 						<form method="POST" id="${seccion_singular}_galeria">
@@ -1914,6 +1922,7 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 										</div>
 										<div class="col s12 m12">
 											<ul class="collapsible custom-collapsible" id="galeria-container">
+												${contenidoGaleria}
 											</ul>
 										</div>
 									</div>
@@ -1929,35 +1938,22 @@ const plantillas = (seccion, datos, rol=0, pagina=1, busqueda="", id=0, cmp) => 
 							</div>
 						</form>`;
 
-						let var_id = datos != "" ? datos[0]['var_id'] : 0;
-						const $variantes = $('[data-select="var_id"]').selectize({
+						$('[data-select="var_id"]').selectize({
 							onChange: (value) => {
 
 								if(value != "") {
 
-									const cmp = document.querySelector('#galeria-container');
-									cmp.innerHTML = "";
-									if(datos != "" && parseInt(value) == datos[0]['var_id']) {
-
-										for (var i = 0; i < datos.length; i++) {
-											if(datos[i]['var_id'] == parseInt(value)) {
-												galeriaVarianteDatos(i, datos[i]);
-											}
-										}
-									} else {
-										
-										for (var i = 0; i < variantes.length; i++) {
-											if(variantes[i]['var_id'] == parseInt(value)) {
-												console.log(variantes[i]);
-												galeriaVariante(variante['var_id'], variante['vrd_ids']);
-											}
+									for (variante of pvariantes) {
+										if(parseInt(value) == parseInt(variante['var_id'])) {
+											opcionesActivas = variante['vrd_ids'].split(",");
 										}
 									}
+
+									contenidoGaleria = cargarGaleriaVariantes(datos, opcionesActivas, detalles);
+									modal.querySelector(`#galeria-container`).innerHTML = contenidoGaleria;
 								}
 							}
 						});
-						const control = $variantes[0].selectize;
-						control.setValue(var_id);
 						$('.collapsible').collapsible();
 
 						M.updateTextFields();

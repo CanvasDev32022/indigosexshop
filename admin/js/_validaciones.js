@@ -518,6 +518,7 @@ const validacion_pvgaleria = (seccion) => {
 		const boton = document.querySelector(`#action_galeria`);
 		boton.disabled = true;
 
+		validacionesGlobal = [];
 		const respuesta = validar_formulario(validacionesGlobal, false);
 		if(respuesta) {
 
