@@ -952,7 +952,7 @@ const agregar_variaciones = (value, cmp) => {
 	return contenido;
 }
 
-const eliminar_variacion = (id, seccion, rol, producto) => {
+const eliminar_variacion = (id, seccion, rol, producto, variante) => {
 
 	Swal.fire({
 		title: "¿Estás seguro de eliminar el registro?",
@@ -968,7 +968,7 @@ const eliminar_variacion = (id, seccion, rol, producto) => {
 		if (result.isConfirmed)
 		{
 			var xhr_usr = new XMLHttpRequest();
-			var params = `id=${id}&prd_id=${producto}&action=eliminar`;
+			var params = `id=${id}&prd_id=${producto}&var_id=${variante}&action=eliminar`;
 			xhr_usr.open("POST", "inc/"+seccion+".php",true);
 			xhr_usr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 			xhr_usr.send(params);
@@ -1367,111 +1367,152 @@ const calcularDiff_precio = (input, precio) => {
 	precioContainer.innerHTML = ajustarPrecio(nuevoPrecio);
 }
 
-// TODO: 
-const galeriaVarianteDatos = (id, datos) => {
+// TODO: Agregar imagenes de galeria
+const cargarGaleriaVariantes = (datos, variantes, opciones) => {
+	
+	let contenidoGaleria = "";
+	const ruta = "../uploads/productos/galeria/";
+	if(datos.length > 0) {
 
-	const cmp = document.querySelector('#galeria-container');
-	let nombre = "";
-	nombre = datos['vrd_nombre'];
+		variantes.forEach((variante, iv) => {
 
-	const li = document.createElement("li");
-	let galeriaContainer = "";
-	if(datos['prg_galeria'] != "") {
+			let existe = false;
+			for (galeria of datos) {
 
-		const ruta = "../uploads/productos/galeria/";
-		const prg_galeria = datos['prg_galeria'].split(";;");
-		prg_galeria.forEach((galeria, i) => {
+				if(parseInt(variante) == parseInt(galeria['vrd_id'])) {
 
-			const tmp = galeria.split("||");
-			const titulo = tmp[0];
-			const archivo = tmp[1];
-			const extension = archivo.split(".")[1];
-			
-			galeriaContainer = galeriaContainer + `
-			<a class="archivo" id="${archivo.split(".")[0]}">
-				<span class="borrable" onclick="anular_archivo(this)" idC="${archivo.split(".")[0]}" archivo="${ruta}${archivo}"><i class="material-icons">close</i></span>
-				<div class="archivo-container">
-					<img src="../uploads/${ruta}${archivo}" alt="${titulo}" loading="lazy">
-				</div>
-				<div class="archivo-footer">${titulo}</div>
-			</a>`;
+					existe = true;
+					let galeriaContainer = "";
+
+					if(galeria['prg_galeria'] != "") {
+
+						const imagenes = galeria['prg_galeria'].split(";;");
+						imagenes.forEach((img, ig) => {
+
+							const tmp = img.split("||");
+							const titulo = tmp[0];
+							const archivo = tmp[1];
+							const extension = archivo.split(".")[1];
+							
+							galeriaContainer = galeriaContainer + `
+							<a class="archivo" id="${archivo.split(".")[0]}">
+								<span class="borrable" onclick="anular_archivo(this)" idC="${archivo.split(".")[0]}" archivo="${ruta}${archivo}"><i class="material-icons">close</i></span>
+								<div class="archivo-container">
+									<img src="../uploads/${ruta}${archivo}" alt="${titulo}" loading="lazy">
+								</div>
+								<div class="archivo-footer">${titulo}</div>
+							</a>`;
+						});
+
+					}
+						
+					contenidoGaleria = contenidoGaleria + `
+					<li class="">
+						<div class="collapsible-header">${galeria['vrd_nombre']}<i class="requerido">*</i></div>
+						<div class="collapsible-body">
+							<div class="row">
+								<input type="hidden" name="archivos_input-${galeria['vrd_id']}" id="archivos_input-${galeria['vrd_id']}" value="${galeria['prg_galeria']}">
+								<div class="row m-0">
+									<div class="col s12 m12">
+										<div class="archivos-container" id="archivosC-${galeria['vrd_id']}">
+											${galeriaContainer}
+											<a class="archivo" onclick="cargar_archivos(${galeria['vrd_id']}, 'imagena')">
+												<div class="archivo-container">
+													<img src="img/tipos/mas.png" alt="" loading="lazy">
+												</div>
+												<div class="archivo-footer">Cargar Imágenes</div>
+											</a>
+										</div>
+									</div>
+									<div class="col s12 m12">
+										<div class="form-error" id="error.archivos_input-${galeria['vrd_id']}"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</li>`;
+				}
+
+			}
+
+			if(!existe) {
+				
+				for (opcion of opciones) {
+
+					if(parseInt(variante) == parseInt(opcion['vrd_id'])) {
+
+						contenidoGaleria = contenidoGaleria + `
+						<li class="">
+							<div class="collapsible-header">${opcion['vrd_nombre']}<i class="requerido">*</i></div>
+							<div class="collapsible-body">
+								<div class="row">
+									<input type="hidden" name="archivos_input-${variante}" id="archivos_input-${variante}" value="">
+									<div class="row m-0">
+										<div class="col s12 m12">
+											<div class="archivos-container" id="archivosC-${variante}">
+												<a class="archivo" onclick="cargar_archivos(${variante}, 'imagena')">
+													<div class="archivo-container">
+														<img src="img/tipos/mas.png" alt="" loading="lazy">
+													</div>
+													<div class="archivo-footer">Cargar Imágenes</div>
+												</a>
+											</div>
+										</div>
+										<div class="col s12 m12">
+											<div class="form-error" id="error.archivos_input-${variante}"></div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</li>`;
+
+					}
+
+				}
+
+			}
+		});
+
+
+	} else {
+		
+		variantes.forEach((variante, iv) => {
+
+			for (opcion of opciones) {
+
+				if(parseInt(variante) == parseInt(opcion['vrd_id'])) {
+
+					contenidoGaleria = contenidoGaleria + `
+					<li class="">
+						<div class="collapsible-header">${opcion['vrd_nombre']}<i class="requerido">*</i></div>
+						<div class="collapsible-body">
+							<div class="row">
+								<input type="hidden" name="archivos_input-${variante}" id="archivos_input-${variante}" value="">
+								<div class="row m-0">
+									<div class="col s12 m12">
+										<div class="archivos-container" id="archivosC-${variante}">
+											<a class="archivo" onclick="cargar_archivos(${variante}, 'imagena')">
+												<div class="archivo-container">
+													<img src="img/tipos/mas.png" alt="" loading="lazy">
+												</div>
+												<div class="archivo-footer">Cargar Imágenes</div>
+											</a>
+										</div>
+									</div>
+									<div class="col s12 m12">
+										<div class="form-error" id="error.archivos_input-${variante}"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</li>`;
+
+				}
+
+			}
+
 		});
 	}
 
-	let contenido = `
-	<div class="collapsible-header">${nombre}</div>
-	<div class="collapsible-body">
-		<div class="row">
-			<input type="hidden" name="archivos_input-${datos['vrd_id']}" id="archivos_input-${datos['vrd_id']}" value="${datos['prg_galeria']}">
-			<div class="row m-0">
-				<div class="col s12 m12">
-					<div class="archivos-container" id="archivosC-${datos['vrd_id']}">
-						${galeriaContainer}
-						<a class="archivo" onclick="cargar_archivos(${datos['vrd_id']}, 'imagena')">
-							<div class="archivo-container">
-								<img src="img/tipos/mas.png" alt="" loading="lazy">
-							</div>
-							<div class="archivo-footer">Cargar Imágenes</div>
-						</a>
-					</div>
-				</div>
-				<div class="col s12 m12">
-					<div class="form-error" id="error.archivos_input-${datos['vrd_id']}"></div>
-				</div>
-			</div>
-		</div>
-	</div>`;
-
-	li.innerHTML = contenido;
-	cmp.appendChild(li);
-	validacionesGlobal.push(
-		[`archivos_input-${datos['vrd_id']}`, '', 'required']
-	);
-}
-
-const galeriaVariante = (variante, opciones) => {
-
-	let contenido = "";
-	const cmp = document.querySelector('#galeria-container');
-	opciones = opciones.split(",");
-	opciones.forEach((opcion, io) => {
-
-		let nombre = "";
-		variacionesGlobal.map((variacion, iv) => {
-			if(variacion['vrd_id'] == parseInt(opcion)) {
-				nombre = variacion['vrd_nombre']
-			};
-		});
-		
-		contenido = contenido + `
-		<li class="">
-			<div class="collapsible-header">${nombre}</div>
-			<div class="collapsible-body">
-				<div class="row">
-					<input type="hidden" name="archivos_input-${opcion}" id="archivos_input-${opcion}" value="">
-					<div class="row m-0">
-						<div class="col s12 m12">
-							<div class="archivos-container" id="archivosC-${opcion}">
-								<a class="archivo" onclick="cargar_archivos(${opcion}, 'imagena')">
-									<div class="archivo-container">
-										<img src="img/tipos/mas.png" alt="" loading="lazy">
-									</div>
-									<div class="archivo-footer">Cargar Imágenes</div>
-								</a>
-							</div>
-						</div>
-						<div class="col s12 m12">
-							<div class="form-error" id="error.archivos_input-${opcion}"></div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</li>`;
-
-		validacionesGlobal.push(
-			[`archivos_input-${opcion}`, '', 'required']
-		);
-	});
-
-	cmp.innerHTML = contenido;
+	return contenidoGaleria;
 }
